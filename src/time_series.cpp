@@ -90,11 +90,9 @@ void TimeSeries::load(std::stringstream& ss) {
   std::getline(ss, m_seriesName, ',');
   std::getline(ss, m_seriesCode, ',');
   while (!ss.eof()) {
-    double data;
     std::getline(ss, token, ',');
-    data = std::stod(token);
-    if (data != -1) {
-      m_data.emplace_back(i + 1960, data);
+    if (token != "-1") {
+      m_data.emplace_back(i + 1960, std::stod(token));
       m_invalid = 0;
     }
     ++i;

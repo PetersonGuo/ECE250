@@ -6,17 +6,18 @@
 */
 
 #include "../include/country.hpp"
+#include "../data_structures/include/file.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <cfloat>
 
-// Invalidate cache upon instantiation
-Country::Country() {}
+Country::Country() : m_hash(this), m_series(m_hash) {}
 
-// Country.cpp
 Country::Country(const Country& other)
-    : m_name(other.m_name), m_code(other.m_code) {
+    : m_name(other.m_name), m_code(other.m_code), m_hash(this),
+      m_series(m_hash) {
   m_series = other.m_series;
 }
 
@@ -25,13 +26,14 @@ Country& Country::operator=(const Country& other) {
     m_name = other.m_name;
     m_code = other.m_code;
     m_series = other.m_series;
+    m_hash = CountryHash(this);
   }
   return *this;
 }
 
 Country::Country(Country&& other) noexcept
     : m_name(std::move(other.m_name)), m_code(std::move(other.m_code)),
-      m_series(std::move(other.m_series)) {}
+      m_hash(this), m_series(std::move(other.m_series)) {}
 
 Country& Country::operator=(Country&& other) noexcept {
   if (this != &other) {
@@ -42,86 +44,75 @@ Country& Country::operator=(Country&& other) noexcept {
   return *this;
 }
 
+TimeSeries& Country::operator[](const std::string& key) {
+  if (!m_series.contains(key) || m_series[key].get_series_code() != key)
+    return dummy_series();
+  return m_series[key];
+}
+
+TimeSeries Country::operator[](const std::string& key) const {
+  return m_series.at(key);
+}
+
 void Country::close() {
   m_name = "";
   m_code = "";
   m_series.clear();
 }
 
-List<TimeSeries>& Country::dummy_series_container() {
-  static List<TimeSeries> dummyContainer;
-  static bool initialized = false;
-  if (!initialized) {
-    TimeSeries dummySeries;
-    dummyContainer.push_back(dummySeries);
-    initialized = true;
-  }
-  return dummyContainer;
-}
-
-List<TimeSeries>& Country::dummy_series_container() const {
-  static List<TimeSeries> dummyContainer;
-  static bool initialized = false;
-  if (!initialized) {
-    TimeSeries dummySeries;
-    dummyContainer.push_back(dummySeries);
-    initialized = true;
-  }
-  return dummyContainer;
+TimeSeries& Country::dummy_series() const {
+  static TimeSeries dummySeries;
+  return dummySeries;
 }
 
 void Country::load(std::ifstream& is) {
-  std::string line, temp_code, temp_name;
-  std::streampos pos;
+  std::string line, temp_name;
   std::stringstream ss;
 
   // Clear all TimeSeries and previous data before loading new data
   close();
 
-  pos = is.tellg();
-  std::getline(is, line, '\n');
+  peek_line(is, line);
   ss.str(line);
   std::getline(ss, m_name, ',');
   std::getline(ss, m_code, ',');
-  is.seekg(pos);
 
   while (!is.eof()) {
     std::string token;
 
-    pos = is.tellg();
-    // Get the line of the csv and the name and country code
-    std::getline(is, line, '\n');
     ss.clear();
+
+    peek_line(is, line);
     ss.str(line);
     std::getline(ss, temp_name, ',');
-    std::getline(ss, temp_code, ',');
+    std::getline(ss, line, ',');
 
-    if (temp_name != m_name) {
+    if (temp_name != m_name)
       break;
-    }
 
-    // Load the TimeSeries using a stringstream that it pointing at the
-    // TimeSeries name
-    m_series.push_back(TimeSeries(ss));
+    auto pos = ss.tellg();
+    std::getline(ss, line, ',');
+    std::getline(ss, line, ',');
+    ss.seekg(pos);
+
+    m_series[line] = TimeSeries(ss);
+    std::getline(is, line, '\n');
   }
-  if (!is.eof())
-    is.seekg(pos);
 }
 
-void Country::list() {
+void Country::list() const {
   // Iterate through the TimeSeries's and print names
   std::cout << m_name << " " << m_code << " ";
-  for (TimeSeries& t : m_series)
-    std::cout << t.get_series_name() << " ";
+  for (auto t : m_series)
+    std::cout << t.getSecond().get_series_name() << " ";
   std::cout << std::endl;
 }
 
 void Country::add(const std::string& series, const uint32_t year,
                   const uint32_t data) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
+  auto it = m_series.find(series);
   if (it != m_series.end()) {
-    it->add_data_point(year, data);
+    (*it).getSecond().add_data_point(year, data);
     return;
   }
   // No matching TimeSeries exists
@@ -130,21 +121,20 @@ void Country::add(const std::string& series, const uint32_t year,
 
 void Country::update(const std::string& series, const uint32_t year,
                      const uint32_t data) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
+  auto it = m_series.find(series);
   if (it != m_series.end()) {
-    it->update_data_point(year, data);
+    (*it).getSecond().update_data_point(year, data);
     return;
   }
   // No matching TimeSeries exists
   std::cout << "failure" << std::endl;
 }
 
-void Country::print(const std::string& series) {
+void Country::print(const std::string& series) const {
   // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
+  auto it = m_series.find(series);
   if (it != m_series.end()) {
-    it->print();
+    (*it).getSecond().print();
     return;
   }
   // No matching TimeSeries exists
@@ -153,9 +143,9 @@ void Country::print(const std::string& series) {
 
 void Country::delete_series(const std::string& series) {
   // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
+  auto it = m_series.find(series);
   if (it != m_series.end()) {
-    m_series.erase(find_series(series));
+    m_series.erase(it);
     std::cout << "success" << std::endl;
     return;
   }
@@ -163,27 +153,22 @@ void Country::delete_series(const std::string& series) {
   std::cout << "failure" << std::endl;
 }
 
-List<TimeSeries>::ListIterator Country::find_series(const std::string& series) {
-  for (List<TimeSeries>::ListIterator it = m_series.begin();
-       it != m_series.end(); ++it)
-    if (it->get_series_code() == series)
-      return it;
-  return dummy_series_container().begin();
-}
-
-List<TimeSeries>::ListIterator
-Country::find_series(const std::string& series) const {
-  for (List<TimeSeries>::ListIterator it = m_series.begin();
-       it != m_series.end(); ++it)
-    if (it->get_series_code() == series)
-      return it;
-  return dummy_series_container().begin();
-}
-
-std::string Country::get_country_name() {
+std::string Country::get_country_name() const {
   return m_name;
 }
 
-List<TimeSeries>::ListIterator Country::end() const {
+std::string Country::get_country_code() const {
+  return m_code;
+}
+
+Map<std::string, TimeSeries, Country::CountryHash>::Iterator
+Country::end() const {
   return m_series.end();
+}
+
+int Country::CountryHash::operator()(const std::string& seriesCode) const {
+  unsigned long W = 0, n = seriesCode.size();
+  for (unsigned int i = n; i > 0; --i)
+    W = W * 26 + seriesCode[n - i] - 'A';
+  return W;
 }

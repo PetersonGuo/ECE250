@@ -1,0 +1,20 @@
+CLASS DESIGN
+The classes implemented are Vector, Pair, TimeSeries, List, ListNode, Iterator, and Country.
+
+The Vector class provides a dynamic array data structure with efficient memory management. It supports operations such as push_back, pop_back, insert, and clear while dynamically resizing its capacity to maintain performance. The initial capacity is set to 2 elements, and the resizing mechanism ensures that the capacity doubles when the array is full and halves when the size falls below a quarter of the capacity. However, the capacity never drops below 2, adhering to predefined constraints.
+
+The Pair class encapsulates two logically related values (e.g., year and value), allowing operations on grouped data. It provides getter functions for access and supports operator overloading for equality checks and assignments, simplifying its usage in contexts where paired data is required.
+
+The TimeSeries class combines the functionality of Vector and Pair to manage time-series data. It supports features such as loading data from input files, verifying monotonicity, calculating the mean and best-fit line, and adding or updating data points. The class reads and stores the series name and series code from input files, using dynamic arrays to store years and values. Missing data is ignored during input processing, ensuring only valid data is included. Caching mechanisms are incorporated to optimize performance for repeated operations, such as monotonicity checks and mean calculations.
+
+The List class implements a doubly linked list, consisting of a chain of ListNodes pointing to each other. The Iterator class enables traversal of the List, facilitating iteration over elements in both forward and reverse directions.
+
+The Country class maintains the country name, country code, and a linked list of TimeSeries objects. It also implements caching to efficiently determine the time series with the largest mean. Computing the mean for each time series takes O(N * m) time, but caching significantly reduces redundant computations, improving performance on average.
+
+ALTERNATIVES AND JUSTIFICATION
+
+Initially, I considered using a Vector of TimeSeries since the Vector class was already implemented. However, I decided against this approach because the extra memory overhead of a dynamically resizable array was unnecessary. Instead, I chose a linked list for its superior insertion and deletion times. The O(N) search complexity of a linked list did not pose a disadvantage since the data was unsorted, which would have been the primary advantage of using a Vector.
+
+RUNTIME ANALYSIS
+
+The LOOKUP command runs in O(1) average time since it accesses array indices by calculating an index based on a key and hashing function. Math is an O(1) operation and accessing an element in an array is also an O(1) operation so LOOKUP becomes an O(1) operation. The worst case for LOOKUP is O(N) in the case where all keys are different but the hashing function produces the same value for each one. This becomes O(N) because it must find the next available index by linearly searching through the array.

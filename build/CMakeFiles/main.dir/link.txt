@@ -1,0 +1,1 @@
+/usr/bin/clang++ -std=c++23 -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/llvm/lib CMakeFiles/main.dir/src/main.cpp.o CMakeFiles/main.dir/src/country.cpp.o CMakeFiles/main.dir/src/time_series.cpp.o -o bin/main

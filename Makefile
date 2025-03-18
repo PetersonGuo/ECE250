@@ -1,6 +1,6 @@
 # Compiler and Flags
 CXX := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -I../data_structures/include
+CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic -O3 -I../data_structures/include
 
 # Source Files
 SRCS := $(wildcard src/*.cpp) $(wildcard ../data_structures/src/*.tpp)
@@ -24,4 +24,4 @@ run: all
 	./$(TARGET)
 
 debug:
-	g++ *.cpp -std=c++17 -Wall -g
+	$(CXX) $(CXXFLAGS) $^ -o $@ -g

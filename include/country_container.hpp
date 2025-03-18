@@ -2,6 +2,7 @@
 #define COUNTRY_CONTAINER
 #include "country.hpp"
 #include "../data_structures/include/list.hpp"
+#include "../data_structures/include/unordered_map.hpp"
 #include <string>
 
 /*
@@ -24,13 +25,19 @@ private:
     List<Country*> m_countries; // List of countries within the range.
 
   public:
+    RangeContainer() : m_min(nullptr), m_max(nullptr) {}
+
     /*
       Returns a pair containing references to the minimum and maximum Country
       objects.
       @return A Pair object containing m_min and m_max.
     */
     Pair<Country*&, Country*&> get_range() {
-      return Pair<Country*&, Country*&>(m_min, m_max);
+      return {m_min, m_max};
+    }
+
+    Pair<Country*, Country*> get_range() const {
+      return {m_min, m_max};
     }
 
     /*
@@ -140,9 +147,27 @@ private:
     TreeNode*& root() {
       return m_root;
     }
+
+    TreeNode* root() const {
+      return m_root;
+    }
   };
 
-  Country m_data[512]; // Fixed-size array to store country data.
+  class CountryContainerHash {
+  private:
+    Map<std::string, Country, CountryContainerHash>& m_data;
+    int hash2(unsigned int) const;
+    int hash1(unsigned int) const;
+    int hash(const std::string&) const;
+
+  public:
+    CountryContainerHash(Map<std::string, Country, CountryContainerHash>& data)
+        : m_data(data) {}
+    int operator()(const std::string&) const;
+    int hash(const std::string&, unsigned int*) const;
+  };
+
+  static const unsigned int m_dataSize = 512;
   Tree<RangeContainer>
       m_tree;               // Binary tree used for range-based country storage.
   std::size_t m_size;       // Number of countries stored.
@@ -152,7 +177,7 @@ private:
     Prints the list of countries stored in the provided List object.
     @param list The List object containing Country pointers to print.
   */
-  void print_list(const List<Country*>& list);
+  void print_list(const List<Country*>&) const;
 
   /*
     Recursively builds the tree structure from country data.
@@ -160,14 +185,14 @@ private:
     @param end End index for the range.
     @param node Reference to the tree node being constructed.
   */
-  void build_helper(int start, int end, Tree<RangeContainer>::TreeNode*& node);
+  void build_helper(double, double, Tree<RangeContainer>::TreeNode*&);
 
   /*
     Computes the mid-range value for a given RangeContainer.
     @param range The RangeContainer object to compute the mid-range for.
     @return The mid-range value.
   */
-  double mid_range(RangeContainer& range);
+  double mid_range(const RangeContainer& range) const;
 
   /*
     Helper function for deleting a country from the tree.
@@ -175,8 +200,13 @@ private:
     @param countryName The name of the country to delete.
     @return True if the country was successfully deleted, false otherwise.
   */
-  bool delete_country_helper(Tree<RangeContainer>::TreeNode* node,
-                             const std::string& countryName);
+  bool delete_country_helper(Tree<RangeContainer>::TreeNode*,
+                             const std::string&);
+
+  CountryContainerHash m_hash;
+
+  Map<std::string, Country, CountryContainerHash>
+      m_data; // Map to store country data.
 
 public:
   /*
@@ -184,50 +214,62 @@ public:
   */
   CountryContainer();
 
+  const Country& operator[](std::string&);
+
+  Country& operator[](int);
+
+  bool contains(const std::string&) const;
+
   /*
     Loads country data from a file.
     @param filename The name of the file to read data from.
   */
-  void load(const std::string& filename);
+  void load(const std::string&);
 
   /*
     Lists all countries stored in the container.
     @param seriesCode The code used to filter which series to list.
   */
-  void list(const std::string& seriesCode);
+  void list(const std::string&) const;
 
   /*
     Computes the range of values for a given series.
     @param seriesCode The code used to determine which series to analyze.
     @return A Pair containing the minimum and maximum values in the range.
   */
-  Pair<double, double> range(const std::string& seriesCode);
+  Pair<double, double> range(const std::string&) const;
 
   /*
     Builds the tree structure based on country data.
     @param seriesCode The code used to determine which series to use for
     building.
   */
-  void build(const std::string& seriesCode);
+  void build(const std::string&);
 
   /*
     Finds and prints all countries that match a given condition.
     @param value The threshold value to compare against.
     @param condition The condition character ('<' or '>') to filter results.
   */
-  void find(const double value, const char condition);
+  void find(const double, const char) const;
 
   /*
     Deletes a country from the container.
     @param countryName The name of the country to delete.
     @return True if the country was successfully deleted, false otherwise.
   */
-  bool delete_country(const std::string& countryName);
+  bool delete_country(const std::string&);
 
   /*
     Finds the min/max means in the BST
     @param condition Boolean flag indicating if looking for min
   */
-  void limits(bool condition);
+  void limits(bool) const;
+
+  Pair<int, unsigned int> lookup(std::string&) const;
+
+  bool remove(std::string&);
+
+  bool insert(std::string&, std::string&);
 };
 #endif

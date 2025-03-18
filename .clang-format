@@ -1,0 +1,15 @@
+BasedOnStyle: LLVM
+# BreakBeforeBraces: Custom   # Enable custom brace placement rules
+# BraceWrapping:
+#   AfterFunction: true        # Place opening braces of functions on a new line
+#   AfterClass: true           # Place opening braces of classes on a new line
+#   AfterNamespace: true       # Place opening braces of namespaces on a new line
+#   SplitEmptyFunction: false  # Keep empty {} on a single line
+#   BeforeElse: true           # Place "else" on a new line
+AllowShortFunctionsOnASingleLine: Empty # Keep empty {} on a single line
+AlwaysBreakTemplateDeclarations: true   # Place template declarations on separate lines
+SortIncludes: false                     # Do not sort includes automatically (Linux style)
+ColumnLimit: 80                         # Restrict line length to 80 characters
+PointerAlignment: Left                  # Align pointers to the left
+DerivePointerAlignment: false           # Disable automatic alignment inference
+IndentAccessModifiers: false            # Disable extra indentation for access modifiers
