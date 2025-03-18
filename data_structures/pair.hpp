@@ -12,87 +12,92 @@
   Template-based Pair class.
   Encapsulates two values (first and second) of potentially different types and
   provides functionality for accessing, comparing, and assigning the values.
+
   @tparam T1 Type of the first value.
   @tparam T2 Type of the second value.
 */
-template <typename T1, typename T2> class Pair {
+template <typename T1, typename T2>
+class Pair
+{
 private:
-  T1 first;  ///< First value of the pair.
-  T2 second; ///< Second value of the pair.
+  T1 first;  // First value of the pair.
+  T2 second; // Second value of the pair.
 
 public:
-  /*
-    Default constructor for the Pair class.
-    Initializes both values to their default states.
-  */
+  /**
+   * @brief Default constructor.
+   * Initializes both values to their default states.
+   */
   Pair();
 
-  /*
-    Parameterized constructor for the Pair class.
-    Initializes the pair with the given values.
-    @param first Value for the first element.
-    @param second Value for the second element.
-  */
-  Pair(const T1 &, const T2 &);
+  /**
+   * @brief Parameterized constructor.
+   * Initializes the pair with the given values.
+   * @param first Value for the first element.
+   * @param second Value for the second element.
+   */
+  Pair(const T1&, const T2&);
 
-  /*
-    Copy constructor for the Pair class.
-    Creates a new Pair by copying the values from another Pair.
-    @param other The Pair object to copy from.
-  */
-  Pair(const Pair &);
+  /**
+   * @brief Copy constructor.
+   * Creates a new Pair by copying the values from another Pair.
+   * @param other The Pair object to copy from.
+   */
+  Pair(const Pair&);
 
-  /*
-    Move constructor for the Pair class.
-    Creates a new Pair by transferring ownership of the values from another
-    Pair.
-    @param other The Pair object to move from.
-  */
-  Pair(Pair &&);
+  /**
+   * @brief Move constructor.
+   * Creates a new Pair by transferring ownership of the values from another
+   * Pair.
+   * @param other The Pair object to move from.
+   */
+  Pair(Pair&&);
 
-  /*
-    Copy assignment operator for the Pair class.
-    Copies the values from another Pair into this Pair.
-    @param other The Pair object to copy from.
-    @return Reference to the updated Pair object.
-  */
-  Pair &operator=(const Pair &);
+  /**
+   * @brief Copy assignment operator.
+   * Copies the values from another Pair into this Pair.
+   * @param other The Pair object to copy from.
+   * @return Reference to the updated Pair object.
+   */
+  Pair& operator=(const Pair&) noexcept;
 
-  /*
-    Move assignment operator for the Pair class.
-    Transfers the values from another Pair into this Pair.
-    @param other The Pair object to move from.
-    @return Reference to the updated Pair object.
-  */
-  Pair &operator=(Pair &&);
+  /**
+   * @brief Move assignment operator.
+   * Transfers the values from another Pair into this Pair.
+   * @param other The Pair object to move from.
+   * @return Reference to the updated Pair object.
+   */
+  Pair& operator=(Pair&&) noexcept;
 
-  /*
-    Equality operator for the Pair class.
-    Compares two Pair objects for equality based on their elements.
-    @param other The Pair object to compare with.
-    @return True if the pairs are equal, false otherwise.
-  */
-  bool operator==(const Pair &) const;
+  /**
+   * @brief Equality operator.
+   * Compares two Pair objects for equality based on their elements.
+   * @param other The Pair object to compare with.
+   * @return True if the pairs are equal, false otherwise.
+   */
+  bool operator==(const Pair&) const;
 
-  /*
-    Inequality operator for the Pair class.
-    Compares two Pair objects for inequality based on their elements.
-    @param other The Pair object to compare with.
-    @return True if the pairs are not equal, false otherwise.
-  */
-  bool operator!=(const Pair &) const;
+  /**
+   * @brief Inequality operator.
+   * Compares two Pair objects for inequality based on their elements.
+   * @param other The Pair object to compare with.
+   * @return True if the pairs are not equal, false otherwise.
+   */
+  bool operator!=(const Pair&) const;
 
-  /*
-    Accessor for the first element of the Pair.
-    @return Reference to the first element.
-  */
-  T1 &getFirst();
+  /**
+   * @brief Accessor for the first element of the Pair.
+   * @return Reference to the first element.
+   */
+  T1& getFirst();
+  const T1& getFirst() const;
 
-  /*
-    Accessor for the second element of the Pair.
-    @return Reference to the second element.
-  */
-  T2 &getSecond();
+  /**
+   * @brief Accessor for the second element of the Pair.
+   * @return Reference to the second element.
+   */
+  T2& getSecond();
+  const T2& getSecond() const;
 };
 
 #include "pair.tpp"

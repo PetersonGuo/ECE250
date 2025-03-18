@@ -21,118 +21,196 @@
 
 #include "data_structures/pair.hpp"
 #include "data_structures/vector.hpp"
+#include <sstream>
 #include <string>
 
-class TimeSeries {
+/*
+  TimeSeries class represents a dataset containing time-series data points,
+  where each data point consists of a year and a corresponding value. It
+  provides functionality to add, update, print, and delete data points, as well
+  as perform statistical operations such as calculating the mean, checking
+  monotonicity, and determining the best-fit line.
+*/
+
+class TimeSeries
+{
 private:
-  Vector<Pair<int, int>> m_data; // Stores the time series data as pairs where
-                                 // first value is year and second is data
+  Vector<Pair<int, double>>
+      m_data;           // Stores the time-series data as (year, value) pairs
 
-  bool m_bIsMonotonic;         // Cached value of calc_monotonic function
-  double m_mean;               // Cached value of calc_mean function
-  double m_slope, m_intercept; // Cached values of calc_fit function
+  bool m_bIsMonotonic;  // Cached value indicating whether the data is monotonic
+  double m_mean;        // Cached mean value of the dataset
+  double m_slope,
+      m_intercept;      // Cached slope and intercept for the best-fit line
 
-  unsigned char m_cache; // Valid cache bool bits where <00000000> is a bitset
-                         // and from right to left, bits represent monotonic
-                         // cache valid, mean cache valid, and fit cache valid
+  unsigned char m_cache; // Bitset used for caching calculations
+                         // Bits represent: [Monotonic, Mean, Fit]
 
-  std::string m_seriesName, m_seriesCode; // TimeSeries name and code
+  std::string m_seriesName,
+      m_seriesCode; // Stores the name and code of the time series
 
 public:
-  /*
-    Constructs a TimeSeries object by loading data from a file.
-    @param filename Name of the file to load the time-series data from.
-  */
-  TimeSeries(const std::string &);
-
-  /*
-    Default constructor that initializes an empty TimeSeries object.
-  */
+  /**
+   * @brief Default constructor that initializes an empty TimeSeries object.
+   */
   TimeSeries();
 
-  /*
-    Clears all data and resets the TimeSeries object to its initial state.
-  */
+  /**
+   * @brief Constructs a TimeSeries object by loading data from a stream.
+   * @param ss The input stream containing time-series data.
+   */
+  TimeSeries(std::stringstream&);
+
+  /**
+   * @brief Destructor for TimeSeries.
+   * Clears all stored data.
+   */
+  ~TimeSeries();
+
+  /**
+   * @brief Copy constructor for TimeSeries.
+   * @param other The TimeSeries object to copy from.
+   */
+  TimeSeries(const TimeSeries&);
+
+  /**
+   * @brief Copy assignment operator.
+   * @param other The TimeSeries object to assign from.
+   * @return A reference to this TimeSeries object.
+   */
+  TimeSeries& operator=(const TimeSeries&);
+
+  /**
+   * @brief Move constructor for TimeSeries.
+   * Transfers ownership of resources from another object.
+   * @param other The TimeSeries object to move from.
+   */
+  TimeSeries(TimeSeries&&) noexcept;
+
+  /**
+   * @brief Move assignment operator.
+   * Transfers ownership of resources from another object.
+   * @param other The TimeSeries object to move from.
+   * @return A reference to this TimeSeries object.
+   */
+  TimeSeries& operator=(TimeSeries&&) noexcept;
+
+  /**
+   * @brief Equality operator to compare two TimeSeries objects.
+   * @param other The TimeSeries object to compare with.
+   * @return True if both objects represent the same series, false otherwise.
+   */
+  bool operator==(const TimeSeries&) const;
+
+  /**
+   * @brief Inequality operator to compare two TimeSeries objects.
+   * @param other The TimeSeries object to compare with.
+   * @return True if the objects represent different series, false otherwise.
+   */
+  bool operator!=(const TimeSeries&) const;
+
+  /**
+   * @brief Clears all data and resets the TimeSeries object to its initial
+   * state.
+   */
   void close();
 
-  /*
-    Loads time-series data from a specified file.
-    Parses the file and populates the internal data structure.
-    @param filename Name of the file to load data from.
-    @return Status message indicating success or failure.
-  */
-  std::string load_data(const std::string &);
+  /**
+   * @brief Loads time-series data from an input stream.
+   * Parses the stream and populates the internal data structure.
+   * @param ss The input stream containing time-series data.
+   */
+  void load(std::stringstream&);
 
-  /*
-    Calculates whether the data is monotonic (non-increasing or non-decreasing).
-    Iterates through the data points to determine if the series is monotonic.
-    @return True if the data is monotonic, false otherwise.
-  */
+  /**
+   * @brief Checks whether the time-series data is monotonic.
+   * @return True if the data is monotonic (non-increasing or non-decreasing),
+   * false otherwise.
+   */
   bool calc_is_monotonic();
 
-  /*
-    Computes the slope and intercept of the best-fit line using linear
-    regression. The function calculates these values based on the current data.
-  */
+  /**
+   * @brief Computes the slope and intercept of the best-fit line using linear
+   * regression.
+   */
   void calc_best_fit();
 
-  /*
-    Calculates the mean of the time-series data.
-    Computes the average of all data points in the series.
-    @return The mean value.
-  */
+  /**
+   * @brief Calculates the mean of the time-series data.
+   * @return The computed mean value.
+   */
   double calc_mean();
 
-  /*
-    Checks if the data is monotonic. If not already cached, calculates and
-    caches the result. Uses the cached monotonicity value if valid.
-    @return True if the data is monotonic, false otherwise.
-  */
+  /**
+   * @brief Determines whether the data is monotonic.
+   * If not already cached, calculates and caches the result.
+   * @return True if the data is monotonic, false otherwise.
+   */
   bool is_monotonic();
 
-  /*
-    Calculates the best-fit line parameters. If not already cached, calculates
-    and caches the result. Uses the cached slope and intercept values if valid.
-    @param slope Reference to store the slope of the best-fit line.
-    @param intercept Reference to store the intercept of the best-fit line.
-  */
-  void best_fit(double &, double &);
+  /**
+   * @brief Computes the best-fit line parameters.
+   * If not already cached, calculates and caches the result.
+   * @param slope Reference to store the computed slope.
+   * @param intercept Reference to store the computed intercept.
+   */
+  void best_fit(double&, double&);
 
-  /*
-    Returns the mean of the data. If not already cached, calculates and caches
-    the result. Uses the cached mean value if valid.
-    @return The mean value.
-  */
+  /**
+   * @brief Returns the mean of the time-series data.
+   * If not already cached, calculates and caches the result.
+   * @return The mean value of the data.
+   */
   double mean();
 
-  /*
-    Adds a new data point to the time series.
-    Ensures that the data point is unique and maintains sorted order.
-    @param year The year of the data point.
-    @param value The value associated with the year.
-    @return True if the data point was successfully added, false otherwise.
-  */
+  /**
+   * @brief Adds a new data point to the time series.
+   * Ensures that the data point is unique and maintains sorted order.
+   * @param year The year of the data point.
+   * @param value The associated value for that year.
+   * @return True if the data point was successfully added, false otherwise.
+   */
   bool add_data_point(int, int);
 
-  /*
-    Prints all the data points in the time series.
-    Outputs each data point as a pair of year and value.
-  */
-  void print();
+  /**
+   * @brief Prints all data points in the time series.
+   * Outputs each data point as a (year, value) pair.
+   */
+  void print() const;
 
-  /*
-    Updates the value of an existing data point.
-    Finds the data point by year and updates its value if it exists.
-    @param year The year of the data point to update.
-    @param value The new value to assign to the year.
-    @return True if the data point was successfully updated, false otherwise.
-  */
+  /**
+   * @brief Updates the value of an existing data point.
+   * Finds the data point by year and updates its value if it exists.
+   * @param year The year of the data point to update.
+   * @param value The new value to assign to that year.
+   * @return True if the data point was successfully updated, false otherwise.
+   */
   bool update_data_point(int, int);
 
-  /*
-    Resets the cached computed properties (monotonicity, mean, best-fit).
-    Invalidates all cached values, forcing recalculation when needed.
-  */
+  /**
+   * @brief Resets the cached computed properties (monotonicity, mean,
+   * best-fit). Invalidates all cached values, forcing recalculation when
+   * needed.
+   */
   void reset_cache();
+
+  /**
+   * @brief Gets the name of the time series.
+   * @return The name of the series as a string.
+   */
+  const std::string get_series_name() const;
+
+  /**
+   * @brief Gets the code of the time series.
+   * @return The code of the series as a string.
+   */
+  const std::string get_series_code() const;
+
+  /**
+   * @brief Gets the number of data points in the time series.
+   * @return The size of the dataset.
+   */
+  const size_t get_size() const;
 };
-#endif
+
+#endif // TIMESERIES
