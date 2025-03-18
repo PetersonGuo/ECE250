@@ -6,47 +6,61 @@
   line, and exit the program.
 */
 
-#include "time_series.hpp"
+#include "country.hpp"
+#include <cstdio>
 #include <iostream>
+#include <string>
 
-// Enum representing the set of available commands.
-enum commands { LOAD, PRINT, ADD, UPDATE, MEAN, MONOTONIC, FIT, EXIT };
-
-int main(int argc, char *argv[]) {
-  TimeSeries time; // TimeSeries object to manage time-series data.
+int main(int argc, char* argv[])
+{
+  Country country; // TimeSeries object to manage time-series data.
   std::string cmd; // Command input from the user.
 
   // Command processing loop.
   while (std::cin >> cmd) {
     if (cmd == "LOAD") {
       // Load data from a file.
-      std::string filename;
-      std::cin >> filename;
-      time.load_data(filename);
-    } else if (cmd == "PRINT") {
-      // Print all data points in the series.
-      time.print();
-    } else if (cmd == "ADD") {
-      // Add a new data point to the series.
+      std::string countryName;
+      std::getchar();
+      std::getline(std::cin, countryName, '\n');
+      country.load(countryName);
+      std::cout << "success" << std::endl;
+    }
+    else if (cmd == "LIST") {
+      // List TimeSeries names
+      country.list();
+    }
+    else if (cmd == "ADD") {
+      // Add data point to a TimeSeries
+      std::string seriesCode;
       int year, data;
-      std::cin >> year >> data;
-      time.add_data_point(year, data);
-    } else if (cmd == "UPDATE") {
-      // Update an existing data point in the series.
+      std::cin >> seriesCode >> year >> data;
+      country.add(seriesCode, year, data);
+    }
+    else if (cmd == "UPDATE") {
+      // Update a data point in a TimeSeries
+      std::string seriesCode;
       int year, data;
-      std::cin >> year >> data;
-      time.update_data_point(year, data);
-    } else if (cmd == "MEAN") {
-      // Calculate and display the mean value of the series.
-      time.mean();
-    } else if (cmd == "MONOTONIC") {
-      // Check and display whether the series is monotonic.
-      time.is_monotonic();
-    } else if (cmd == "FIT") {
-      // Calculate and display the best-fit line parameters.
-      double m, b;
-      time.best_fit(m, b);
-    } else if (cmd == "EXIT") {
+      std::cin >> seriesCode >> year >> data;
+      country.update(seriesCode, year, data);
+    }
+    else if (cmd == "PRINT") {
+      // Print data in a TimeSeries
+      std::string seriesCode;
+      std::cin >> seriesCode;
+      country.print(seriesCode);
+    }
+    else if (cmd == "DELETE") {
+      // Delete a TimeSeries
+      std::string seriesCode;
+      std::cin >> seriesCode;
+      country.delete_series(seriesCode);
+    }
+    else if (cmd == "BIGGEST") {
+      // Find the biggest TimeSeries mean
+      country.biggest();
+    }
+    else if (cmd == "EXIT") {
       // Exit the program.
       return 0;
     }
