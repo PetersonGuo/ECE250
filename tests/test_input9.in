@@ -1,0 +1,5 @@
+INSERT CAN lab2_multidata.csv
+INSERT AND lab2_multidata.csv
+INSERT BGV lab2_multidata.csv
+LOOKUP BGV
+EXIT

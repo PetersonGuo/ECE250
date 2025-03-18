@@ -19,8 +19,8 @@
 template <typename T>
 void Vector<T>::reallocate() {
   // Ensure the vector has a minimum capacity of 2
-  if (m_capacity < 2) {
-    resize(2);
+  if (m_capacity < m_min_capacity) {
+    resize(m_min_capacity);
   }
   // Double the capacity when the vector is full
   else if (m_size >= m_capacity) {
@@ -29,9 +29,9 @@ void Vector<T>::reallocate() {
     resize(m_capacity);
   }
   // Reduce capacity by half if size is less than a quarter of capacity
-  else if (m_capacity > 2 && m_size * 4 <= m_capacity) {
+  else if (m_capacity > m_min_capacity && m_size * 4 <= m_capacity) {
     m_capacity >>= 1; // Bitwise right shift is equivalent to dividing by 2
-    resize(m_capacity < 2 ? 2 : m_capacity);
+    resize(m_capacity < m_min_capacity ? m_min_capacity : m_capacity);
   }
 }
 
@@ -39,12 +39,14 @@ template <typename T>
 Vector<T>::Vector(const size_t size) : m_size(size), m_pValues(nullptr) {
   // Ensure the minimum capacity is 2
   m_capacity = size < 2 ? 2 : size;
+  m_min_capacity = 3;
   resize(m_capacity);
 }
 
 template <typename T>
 Vector<T>::Vector(const Vector& other)
-    : m_capacity(other.m_capacity), m_size(other.m_size), m_pValues(nullptr) {
+    : m_capacity(other.m_capacity), m_size(other.m_size),
+      m_min_capacity(other.m_min_capacity), m_pValues(nullptr) {
   resize(m_capacity);
 
   // Copy all elements from the other vector
@@ -59,7 +61,9 @@ Vector<T>& Vector<T>::operator=(const Vector& other) {
 
     m_size = other.m_size;
     m_capacity = other.m_capacity;
-    resize(m_capacity);
+    m_min_capacity = other.m_min_capacity;
+    delete[] m_pValues;
+    m_pValues = new T[m_capacity];
 
     // Copy elements from the other vector
     for (uint64_t i = 0; i < m_size; ++i)
@@ -70,12 +74,11 @@ Vector<T>& Vector<T>::operator=(const Vector& other) {
 
 template <typename T>
 Vector<T>::Vector(Vector&& other) noexcept {
-  close();
-
   // Transfer ownership of the data
   m_pValues = other.m_pValues;
   other.m_pValues = nullptr;
 
+  m_min_capacity = other.m_min_capacity;
   m_size = other.m_size;
   m_capacity = other.m_capacity;
 
@@ -93,6 +96,7 @@ Vector<T>& Vector<T>::operator=(Vector&& other) noexcept {
 
     m_size = other.m_size;
     m_capacity = other.m_capacity;
+    m_min_capacity = other.m_min_capacity;
 
     other.close();
   }
@@ -265,6 +269,14 @@ void Vector<T>::erase(const T& remove) {
       erase(i); // Remove first occurrence of the value
       return;
     }
+  }
+}
+
+template <typename T>
+void Vector<T>::reserve(const size_t size) {
+  if (size > m_capacity) {
+    m_min_capacity = size;
+    reallocate();
   }
 }
 

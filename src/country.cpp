@@ -6,17 +6,25 @@
 */
 
 #include "../include/country.hpp"
+#include "../data_structures/include/file.hpp"
+
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <cfloat>
 
-// Invalidate cache upon instantiation
-Country::Country() {}
+unsigned long long
+Country::CountryHash::operator()(const std::string& seriesCode) const {
+  unsigned long long W = 0, n = seriesCode.size();
+  for (unsigned int i = n; i > 0; --i)
+    W = W * 29 + seriesCode[n - i] - 'A';
+  return W;
+}
 
-// Country.cpp
+Country::Country() : m_series(m_hash) {}
+
 Country::Country(const Country& other)
-    : m_name(other.m_name), m_code(other.m_code) {
+    : m_name(other.m_name), m_code(other.m_code), m_series(m_hash) {
   m_series = other.m_series;
 }
 
@@ -42,148 +50,84 @@ Country& Country::operator=(Country&& other) noexcept {
   return *this;
 }
 
+TimeSeries& Country::operator[](const std::string& key) {
+  if (!m_series.contains(key))
+    return dummy_series();
+  return m_series[key];
+}
+
+TimeSeries Country::operator[](const std::string& key) const {
+  return m_series.at(key);
+}
+
 void Country::close() {
   m_name = "";
   m_code = "";
   m_series.clear();
 }
 
-List<TimeSeries>& Country::dummy_series_container() {
-  static List<TimeSeries> dummyContainer;
-  static bool initialized = false;
-  if (!initialized) {
-    TimeSeries dummySeries;
-    dummyContainer.push_back(dummySeries);
-    initialized = true;
-  }
-  return dummyContainer;
+TimeSeries& Country::dummy_series() const {
+  static TimeSeries dummySeries;
+  dummySeries.mean();
+  return dummySeries;
 }
 
-List<TimeSeries>& Country::dummy_series_container() const {
-  static List<TimeSeries> dummyContainer;
-  static bool initialized = false;
-  if (!initialized) {
-    TimeSeries dummySeries;
-    dummyContainer.push_back(dummySeries);
-    initialized = true;
-  }
-  return dummyContainer;
-}
-
-void Country::load(std::ifstream& is) {
-  std::string line, temp_code, temp_name;
-  std::streampos pos;
+bool Country::load(std::ifstream& is) {
+  std::string line, temp_name;
   std::stringstream ss;
 
   // Clear all TimeSeries and previous data before loading new data
   close();
 
-  pos = is.tellg();
-  std::getline(is, line, '\n');
+  peek_line(is, line);
   ss.str(line);
   std::getline(ss, m_name, ',');
   std::getline(ss, m_code, ',');
-  is.seekg(pos);
 
-  while (!is.eof()) {
-    std::string token;
+  while (true) {
+    peek_line(is, temp_name, ',');
 
-    pos = is.tellg();
-    // Get the line of the csv and the name and country code
-    std::getline(is, line, '\n');
+    if (temp_name == "")
+      return 0;
+
+    if (temp_name != m_name)
+      return 1;
+
     ss.clear();
+    std::getline(is, line);
     ss.str(line);
-    std::getline(ss, temp_name, ',');
-    std::getline(ss, temp_code, ',');
 
-    if (temp_name != m_name) {
-      break;
-    }
+    std::getline(ss, line, ',');
+    std::getline(ss, line, ',');
 
-    // Load the TimeSeries using a stringstream that it pointing at the
-    // TimeSeries name
-    m_series.push_back(TimeSeries(ss));
+    auto pos = ss.tellg();
+    std::getline(ss, line, ',');
+    std::getline(ss, line, ',');
+    ss.seekg(pos);
+
+    m_seriesCodes.push_back(line); // Store the series code in order
+    m_series[line].load(ss);
   }
-  if (!is.eof())
-    is.seekg(pos);
+  return 1;
 }
 
-void Country::list() {
+void Country::list() const {
   // Iterate through the TimeSeries's and print names
   std::cout << m_name << " " << m_code << " ";
-  for (TimeSeries& t : m_series)
-    std::cout << t.get_series_name() << " ";
+  for (auto& t : m_seriesCodes)
+    std::cout << m_series.at(t).get_series_name() << " ";
   std::cout << std::endl;
 }
 
-void Country::add(const std::string& series, const uint32_t year,
-                  const uint32_t data) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
-  if (it != m_series.end()) {
-    it->add_data_point(year, data);
-    return;
-  }
-  // No matching TimeSeries exists
-  std::cout << "failure" << std::endl;
-}
-
-void Country::update(const std::string& series, const uint32_t year,
-                     const uint32_t data) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
-  if (it != m_series.end()) {
-    it->update_data_point(year, data);
-    return;
-  }
-  // No matching TimeSeries exists
-  std::cout << "failure" << std::endl;
-}
-
-void Country::print(const std::string& series) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
-  if (it != m_series.end()) {
-    it->print();
-    return;
-  }
-  // No matching TimeSeries exists
-  std::cout << "failure" << std::endl;
-}
-
-void Country::delete_series(const std::string& series) {
-  // Iterate through TimeSeries's to find a matching code
-  List<TimeSeries>::ListIterator it = find_series(series);
-  if (it != m_series.end()) {
-    m_series.erase(find_series(series));
-    std::cout << "success" << std::endl;
-    return;
-  }
-  // No matching TimeSeries exists
-  std::cout << "failure" << std::endl;
-}
-
-List<TimeSeries>::ListIterator Country::find_series(const std::string& series) {
-  for (List<TimeSeries>::ListIterator it = m_series.begin();
-       it != m_series.end(); ++it)
-    if (it->get_series_code() == series)
-      return it;
-  return dummy_series_container().begin();
-}
-
-List<TimeSeries>::ListIterator
-Country::find_series(const std::string& series) const {
-  for (List<TimeSeries>::ListIterator it = m_series.begin();
-       it != m_series.end(); ++it)
-    if (it->get_series_code() == series)
-      return it;
-  return dummy_series_container().begin();
-}
-
-std::string Country::get_country_name() {
+std::string Country::get_country_name() const {
   return m_name;
 }
 
-List<TimeSeries>::ListIterator Country::end() const {
+std::string Country::get_country_code() const {
+  return m_code;
+}
+
+Map<std::string, TimeSeries, Country::CountryHash>::Iterator
+Country::end() const {
   return m_series.end();
 }

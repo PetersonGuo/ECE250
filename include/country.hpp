@@ -10,7 +10,8 @@
 #define COUNTRY
 
 #include "time_series.hpp"
-#include "../data_structures/include/list.hpp"
+#include "../data_structures/include/vector.hpp"
+#include "../data_structures/include/unordered_map.hpp"
 
 /*
   Country class represents a collection of time-series data for a specific
@@ -19,9 +20,26 @@
   dataset.
 */
 class Country {
+public:
+  /**
+   * @brief Hash function object for computing the hash value of a series code.
+   */
+  class CountryHash {
+  public:
+    /**
+     * @brief Hash function to compute the hash value of a series code.
+     * @param seriesCode The series code to hash.
+     * @return The computed hash value.
+     */
+    unsigned long long operator()(const std::string&) const;
+  };
+
 private:
   std::string m_name, m_code; // Country name and code
-  List<TimeSeries> m_series;  // Stores all time-series data for the country
+  static CountryHash m_hash;
+  Vector<std::string> m_seriesCodes; // List of series codes
+  Map<std::string, TimeSeries, CountryHash>
+      m_series; // Stores all time-series data for the country
 
 public:
   /**
@@ -56,22 +74,31 @@ public:
   Country& operator=(Country&& other) noexcept;
 
   /**
-   * @brief Returns a dummy container with a mean of 0.
-   * @return Reference to a dummy container of time-series data.
+   * @brief Finds a specific time series in the list (const version).
+   * @param series The series code to find.
+   * @return Const iterator to the found time series.
    */
-  List<TimeSeries>& dummy_series_container();
+  TimeSeries& operator[](const std::string&);
+
+  /**
+   * @brief Finds a specific time series in the list.
+   * @param series The series code to find.
+   * @return Const iterator to the found time series.
+   */
+  TimeSeries operator[](const std::string&) const;
 
   /**
    * @brief Returns a dummy container with a mean of 0.
    * @return Const reference to a dummy container of time-series data.
    */
-  List<TimeSeries>& dummy_series_container() const;
+  TimeSeries& dummy_series() const;
 
   /**
    * @brief Loads time-series data for the given country.
    * @param is Input filestream containing the country's data.
+   * @return True if at EOF, false otherwise.
    */
-  void load(std::ifstream& is);
+  bool load(std::ifstream& is);
 
   /**
    * @brief Clears all stored data and resets the Country object.
@@ -82,62 +109,25 @@ public:
    * @brief Lists all available time-series datasets for the country.
    * Prints the country name, code, and all stored series.
    */
-  void list();
-
-  /**
-   * @brief Adds a new data point to a specified time series.
-   * @param series The series code identifying the time series.
-   * @param year The year of the data point.
-   * @param data The value associated with the given year.
-   */
-  void add(const std::string& series, const uint32_t year, const uint32_t data);
-
-  /**
-   * @brief Updates an existing data point in a specified time series.
-   * @param series The series code identifying the time series.
-   * @param year The year of the data point to update.
-   * @param data The new value to be assigned to the given year.
-   */
-  void update(const std::string& series, const uint32_t year,
-              const uint32_t data);
-
-  /**
-   * @brief Prints all data points for the given time series.
-   * @param series The series code identifying the time series to print.
-   */
-  void print(const std::string& series);
-
-  /**
-   * @brief Deletes a specified time series from the country's dataset.
-   * @param series The series code identifying the time series to delete.
-   */
-  void delete_series(const std::string& series);
-
-  /**
-   * @brief Finds a specific time series in the list.
-   * @param series The series code to find.
-   * @return Iterator to the found time series.
-   */
-  List<TimeSeries>::ListIterator find_series(const std::string& series);
-
-  /**
-   * @brief Finds a specific time series in the list (const version).
-   * @param series The series code to find.
-   * @return Const iterator to the found time series.
-   */
-  List<TimeSeries>::ListIterator find_series(const std::string& series) const;
+  void list() const;
 
   /**
    * @brief Retrieves the country's name.
    * @return The country name as a string.
    */
-  std::string get_country_name();
+  std::string get_country_name() const;
+
+  /**
+   * @brief Retrieves the country's code.
+   * @return The country code as a string.
+   */
+  std::string get_country_code() const;
 
   /**
    * @brief Returns an iterator to the end of the list.
    * @return Iterator pointing to the end of the list.
    */
-  List<TimeSeries>::ListIterator end() const;
+  Map<std::string, TimeSeries, CountryHash>::Iterator end() const;
 };
 
 #endif

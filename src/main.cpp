@@ -24,7 +24,8 @@ int main() {
       std::cout << "success" << std::endl;
     } else if (cmd == "LIST") {
       std::string countryName;
-      std::cin >> countryName;
+      getchar();
+      std::getline(std::cin, countryName);
       container.list(countryName);
     } else if (cmd == "RANGE") {
       std::string seriesCode;
@@ -46,12 +47,35 @@ int main() {
     } else if (cmd == "DELETE") {
       // Delete a Country
       std::string countryName;
-      std::cin >> countryName;
-      std::cout << (container.delete_country(countryName) ? "success" : "failure") << '\n';
+      getchar();
+      std::getline(std::cin, countryName);
+      std::cout << (container.delete_country(countryName) ? "success"
+                                                          : "failure")
+                << '\n';
     } else if (cmd == "LIMITS") {
       std::string condition;
       std::cin >> condition;
       container.limits(condition == "lowest");
+    } else if (cmd == "LOOKUP") {
+      std::string countryCode;
+      std::cin >> countryCode;
+      Pair<int, unsigned int> in = container.lookup(countryCode);
+      if (!container.contains(countryCode))
+        std::cout << "failure\n";
+      else
+        std::cout << "index " << in.getFirst() << " searches " << in.getSecond()
+                  << '\n';
+    } else if (cmd == "REMOVE") {
+      std::string countryCode;
+      std::cin >> countryCode;
+      std::cout << (container.remove(countryCode) ? "success" : "failure")
+                << '\n';
+    } else if (cmd == "INSERT") {
+      std::string countryCode, filename;
+      std::cin >> countryCode >> filename;
+      std::cout << (container.insert(countryCode, filename) ? "success"
+                                                            : "failure")
+                << '\n';
     } else if (cmd == "EXIT") {
       // Exit the program.
       return 0;

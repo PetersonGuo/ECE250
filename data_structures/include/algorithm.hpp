@@ -1,5 +1,5 @@
-#ifndef ALGORITHM
-#define ALGORITHM
+#ifndef ALG
+#define ALG
 
 #include "vector.hpp"
 

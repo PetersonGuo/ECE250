@@ -2,7 +2,7 @@
   List class header file.
   This file defines a template-based doubly linked list implementation.
   It provides a List class for managing dynamic sequences of elements,
-  along with a ListIterator for traversal and a ListNode for element storage.
+  along with a Iterator for traversal and a ListNode for element storage.
 */
 
 #ifndef LIST_HPP
@@ -86,7 +86,7 @@ private:
     bool operator!=(const T&) const;
 
     friend class List;
-    friend class ListIterator;
+    friend class Iterator;
   };
 
 protected:
@@ -95,10 +95,10 @@ protected:
 
 public:
   /*
-    Template-based ListIterator class.
+    Template-based Iterator class.
     Provides an iterator for traversing a doubly linked list.
   */
-  class ListIterator {
+  class Iterator {
   private:
     ListNode* m_node; // Pointer to the current node.
 
@@ -111,7 +111,7 @@ public:
      * @brief Constructor for the iterator.
      * @param node Pointer to a ListNode to initialize the iterator.
      */
-    explicit ListIterator(ListNode* node) : m_node(node) {}
+    explicit Iterator(ListNode* node) : m_node(node) {}
 
     /**
      * @brief Dereference operator.
@@ -136,7 +136,7 @@ public:
      * Moves the iterator to the next node.
      * @return Reference to the updated iterator.
      */
-    ListIterator& operator++() {
+    Iterator& operator++() {
       if (m_node)
         m_node = m_node->m_pNextNode;
       return *this;
@@ -147,8 +147,8 @@ public:
      * Moves the iterator to the next node and returns the previous state.
      * @return Copy of the iterator before incrementing.
      */
-    ListIterator operator++(int) {
-      ListIterator temp = *this;
+    Iterator operator++(int) {
+      Iterator temp = *this;
       ++(*this);
       return temp;
     }
@@ -158,7 +158,7 @@ public:
      * Moves the iterator to the previous node.
      * @return Reference to the updated iterator.
      */
-    ListIterator& operator--() {
+    Iterator& operator--() {
       if (m_node)
         m_node = m_node->m_pPrevNode;
       return *this;
@@ -169,8 +169,8 @@ public:
      * Moves the iterator to the previous node and returns the previous state.
      * @return Copy of the iterator before decrementing.
      */
-    ListIterator operator--(int) {
-      ListIterator temp = *this;
+    Iterator operator--(int) {
+      Iterator temp = *this;
       --(*this);
       return temp;
     }
@@ -181,7 +181,7 @@ public:
      * @param other Another iterator to compare.
      * @return True if both iterators are equal.
      */
-    bool operator==(const ListIterator& other) const {
+    bool operator==(const Iterator& other) const {
       return m_node == other.m_node;
     }
 
@@ -191,7 +191,7 @@ public:
      * @param other Another iterator to compare.
      * @return True if the iterators are different.
      */
-    bool operator!=(const ListIterator& other) const {
+    bool operator!=(const Iterator& other) const {
       return m_node != other.m_node;
     }
 
@@ -245,7 +245,7 @@ public:
    * @return Reference to the first element.
    * @throws std::runtime_error if the list is empty.
    */
-  const T& front() const;
+  T front() const;
   T& front();
 
   /**
@@ -253,38 +253,38 @@ public:
    * @return Reference to the last element.
    * @throws std::runtime_error if the list is empty.
    */
-  const T& back() const;
+  T back() const;
   T& back();
 
   /**
    * @brief Returns an iterator pointing to the first element of the list.
-   * @return A ListIterator to the first element.
+   * @return A Iterator to the first element.
    */
-  ListIterator begin() const;
-  ListIterator begin();
+  Iterator begin() const;
+  Iterator begin();
 
   /**
    * @brief Returns an iterator pointing to the last element of the list.
-   * @return A ListIterator to the last element.
+   * @return A Iterator to the last element.
    */
-  ListIterator rbegin() const;
-  ListIterator rbegin();
+  Iterator rbegin() const;
+  Iterator rbegin();
 
   /**
    * @brief Returns an iterator pointing past the last element of the list.
    * Used to denote the end of the list in iteration.
-   * @return A ListIterator pointing past the last element.
+   * @return A Iterator pointing past the last element.
    */
-  ListIterator end() const;
-  ListIterator end();
+  Iterator end() const;
+  Iterator end();
 
   /**
    * @brief Returns an iterator pointing before the first element of the list.
    * Used to denote the reverse end of the list in iteration.
-   * @return A ListIterator pointing before the first element.
+   * @return A Iterator pointing before the first element.
    */
-  ListIterator rend() const;
-  ListIterator rend();
+  Iterator rend() const;
+  Iterator rend();
 
   /**
    * @brief Inserts an element at the front of the list.
@@ -309,12 +309,12 @@ public:
   /**
    * @brief Removes the last element from the list.
    */
-  void pop_back();
+  T pop_back();
 
   /**
    * @brief Removes the first element from the list.
    */
-  void pop_front();
+  T pop_front();
 
   /**
    * @brief Removes an element at a specific index.
@@ -326,7 +326,7 @@ public:
    * @brief Removes an element at a specific index.
    * @param it Iterator pointing to element to remove.
    */
-  void erase(const ListIterator&);
+  void erase(Iterator&);
 
   /**
    * @brief Clears all elements from the list.
@@ -338,7 +338,19 @@ public:
    * @param data The value to search for.
    * @return Iterator pointing to the element if found.
    */
-  ListIterator find(const T& data);
+  Iterator find(const T& data) const;
+
+  /**
+   * @brief Checks if the list is empty.
+   * @return True if the list is empty, false otherwise.
+   */
+  bool empty() const;
+
+  /**
+   * @brief Returns the number of elements in the list.
+   * @return The number of elements.
+   */
+  size_t size() const;
 };
 
 #include "list.tpp"

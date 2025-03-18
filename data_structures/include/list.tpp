@@ -1,5 +1,5 @@
 /*
-  Implementation of the List, ListIterator, and ListNode class templates.
+  Implementation of the List, Iterator, and ListNode class templates.
   This file contains the definitions of the List class template methods,
   which encapsulate a Linked List of values of potentially different types.
   It includes functionality for construction, assignment, comparison,
@@ -19,33 +19,27 @@
 // ListNode Implementation (Doubly Linked List Node)
 
 template <typename T>
-List<T>::ListNode::ListNode() : m_pNextNode(nullptr), m_pPrevNode(nullptr)
-{}
+List<T>::ListNode::ListNode() : m_pNextNode(nullptr), m_pPrevNode(nullptr) {}
 
 template <typename T>
 List<T>::ListNode::ListNode(const T& data)
-    : m_pNextNode(nullptr), m_pPrevNode(nullptr), m_data(data)
-{}
+    : m_pNextNode(nullptr), m_pPrevNode(nullptr), m_data(data) {}
 
 template <typename T>
 List<T>::ListNode::ListNode(ListNode* next, const T& data)
-    : m_pNextNode(next), m_pPrevNode(nullptr), m_data(data)
-{}
+    : m_pNextNode(next), m_pPrevNode(nullptr), m_data(data) {}
 
 template <typename T>
 List<T>::ListNode::ListNode(ListNode* prev, ListNode* next, const T& data)
-    : m_pNextNode(next), m_pPrevNode(prev), m_data(data)
-{}
+    : m_pNextNode(next), m_pPrevNode(prev), m_data(data) {}
 
 template <typename T>
-void List<T>::ListNode::operator=(const T& data)
-{
+void List<T>::ListNode::operator=(const T& data) {
   m_data = data;
 }
 
 template <typename T>
-bool List<T>::ListNode::operator==(const T& data) const
-{
+bool List<T>::ListNode::operator==(const T& data) const {
   return m_data == data;
 }
 
@@ -57,12 +51,10 @@ bool List<T>::ListNode::operator!=(const T& data) const {
 // List Implementation (Doubly Linked List)
 
 template <typename T>
-List<T>::List() : m_pHead(nullptr), m_pTail(nullptr), m_size(0)
-{}
+List<T>::List() : m_pHead(nullptr), m_pTail(nullptr), m_size(0) {}
 
 template <typename T>
-List<T>::~List()
-{
+List<T>::~List() {
   clear();
 }
 
@@ -108,88 +100,75 @@ List<T>& List<T>::operator=(List<T>&& other) noexcept {
 }
 
 template <typename T>
-const T& List<T>::front() const
-{
+T List<T>::front() const {
   if (!m_pHead)
     throw std::runtime_error("List is empty");
   return m_pHead->m_data;
 }
 
 template <typename T>
-T& List<T>::front()
-{
+T& List<T>::front() {
   if (!m_pHead)
     throw std::runtime_error("List is empty");
   return m_pHead->m_data;
 }
 
 template <typename T>
-const T& List<T>::back() const
-{
+T List<T>::back() const {
   if (!m_pTail)
     throw std::runtime_error("List is empty");
   return m_pTail->m_data;
 }
 
 template <typename T>
-T& List<T>::back()
-{
+T& List<T>::back() {
   if (!m_pTail)
     throw std::runtime_error("List is empty");
   return m_pTail->m_data;
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::begin() const
-{
-  return ListIterator(m_pHead);
+typename List<T>::Iterator List<T>::begin() const {
+  return Iterator(m_pHead);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::begin()
-{
-  return ListIterator(m_pHead);
+typename List<T>::Iterator List<T>::begin() {
+  return Iterator(m_pHead);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::rbegin() const
-{
-  return ListIterator(m_pTail);
+typename List<T>::Iterator List<T>::rbegin() const {
+  return Iterator(m_pTail);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::rbegin()
-{
-  return ListIterator(m_pTail);
+typename List<T>::Iterator List<T>::rbegin() {
+  return Iterator(m_pTail);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::end() const
-{
-  return ListIterator(nullptr);
+typename List<T>::Iterator List<T>::end() const {
+  return Iterator(nullptr);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::end()
-{
-  return List<T>::ListIterator(nullptr);
+typename List<T>::Iterator List<T>::end() {
+  return List<T>::Iterator(nullptr);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::rend() const
-{
-  return ListIterator(nullptr);
+typename List<T>::Iterator List<T>::rend() const {
+  return Iterator(nullptr);
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::rend()
-{
-  return List<T>::ListIterator(nullptr);
+typename List<T>::Iterator List<T>::rend() {
+  return List<T>::Iterator(nullptr);
 }
 
 template <typename T>
-void List<T>::push_front(const T& data)
-{
+void List<T>::push_front(const T& data) {
   ListNode* temp = new ListNode(m_pHead, data);
 
   // If the list is empty, set both head and tail to the new node
@@ -203,8 +182,7 @@ void List<T>::push_front(const T& data)
 }
 
 template <typename T>
-void List<T>::push_back(const T& data)
-{
+void List<T>::push_back(const T& data) {
   ListNode* temp = new ListNode(data);
   temp->m_pPrevNode = m_pTail; // Link new node to the previous tail
 
@@ -219,8 +197,7 @@ void List<T>::push_back(const T& data)
 }
 
 template <typename T>
-void List<T>::insert(const uint64_t index, const T& data)
-{
+void List<T>::insert(const uint64_t index, const T& data) {
   if (index > m_size)
     throw std::out_of_range("Index out of bounds");
 
@@ -247,12 +224,12 @@ void List<T>::insert(const uint64_t index, const T& data)
 }
 
 template <typename T>
-void List<T>::pop_back()
-{
+T List<T>::pop_back() {
   if (!m_pTail)
-    return;
+    return T();
 
   ListNode* temp = m_pTail;
+  T data = m_pTail->m_data;
   m_pTail = m_pTail->m_pPrevNode;
 
   // If there's still an element left, update tail's next pointer
@@ -261,15 +238,17 @@ void List<T>::pop_back()
 
   delete temp;
   --m_size;
+
+  return data;
 }
 
 template <typename T>
-void List<T>::pop_front()
-{
+T List<T>::pop_front() {
   if (!m_pHead)
-    return;
+    return T();
 
   ListNode* temp = m_pHead;
+  T data = m_pHead->m_data;
   m_pHead = m_pHead->m_pNextNode;
 
   // If there's still an element left, update head's prev pointer
@@ -278,11 +257,12 @@ void List<T>::pop_front()
 
   delete temp;
   --m_size;
+
+  return data;
 }
 
 template <typename T>
-void List<T>::erase(const uint64_t index)
-{
+void List<T>::erase(const uint64_t index) {
   if (index >= m_size)
     throw std::out_of_range("Index out of bounds");
 
@@ -308,43 +288,53 @@ void List<T>::erase(const uint64_t index)
 }
 
 template <typename T>
-void List<T>::erase(const ListIterator& it)
-{
+void List<T>::erase(Iterator& it) {
   if (!it.m_node)
     return;
 
-  // Adjust pointers to remove node from list
-  if (it.m_node->m_pPrevNode)
-    it.m_node->m_pPrevNode->m_pNextNode = it.m_node->m_pNextNode;
-  if (it.m_node->m_pNextNode)
-    it.m_node->m_pNextNode->m_pPrevNode = it.m_node->m_pPrevNode;
+  ListNode* node = it.m_node;
 
-  // Update head or tail pointers if necessary
-  if (it == begin())
-    m_pHead = it.m_node->m_pNextNode;
-  if (it == end())
-    m_pTail = it.m_node->m_pPrevNode;
+  // Unlink from previous node if it exists; if not, update m_pHead.
+  if (node->m_pPrevNode)
+    node->m_pPrevNode->m_pNextNode = node->m_pNextNode;
+  else
+    m_pHead = node->m_pNextNode;
 
-  delete it.m_node;
+  // Unlink from next node if it exists; if not, update m_pTail.
+  if (node->m_pNextNode)
+    node->m_pNextNode->m_pPrevNode = node->m_pPrevNode;
+  else
+    m_pTail = node->m_pPrevNode;
+
+  delete node;
+  it.m_node = nullptr;
   --m_size;
 }
 
 template <typename T>
-void List<T>::clear()
-{
+void List<T>::clear() {
   // Continuously remove front elements until the list is empty
   while (m_pHead)
     pop_front();
 }
 
 template <typename T>
-typename List<T>::ListIterator List<T>::find(const T& data)
-{
+typename List<T>::Iterator List<T>::find(const T& data) const {
   ListNode* temp = m_pHead;
   while (temp)
     if (temp->m_data == data)
-      return ListIterator(temp);
+      return Iterator(temp);
   return end();
+}
+
+template <typename T>
+bool List<T>::empty() const {
+  return m_size == 0;
+}
+
+template <typename T>
+size_t List<T>::size() const {
+  return m_size;
 }
 
 #endif // LIST_TPP

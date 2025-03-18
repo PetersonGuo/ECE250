@@ -13,7 +13,7 @@ all: $(TARGET)
 
 # Compile everything in one step (no object files)
 $(TARGET): $(SRCS)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) -O3 $^ -o $@
 
 # Clean
 clean:
@@ -24,4 +24,4 @@ run: all
 	./$(TARGET)
 
 debug:
-	g++ *.cpp -std=c++17 -Wall -g
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) -g

@@ -1,0 +1,6 @@
+INSERT CAN lab2_multidata.csv
+INSERT FRA lab2_multidata.csv
+REMOVE FRA
+INSERT FRA lab2_multidata.csv
+LOOKUP FRA
+EXIT

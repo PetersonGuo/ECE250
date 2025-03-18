@@ -21,9 +21,10 @@
 template <typename T>
 class Vector {
 private:
-  size_t m_capacity; // Maximum capacity of the dynamic array.
-  size_t m_size;     // Current number of elements in the array.
-  T* m_pValues;      // Pointer to the values stored in the array.
+  size_t m_capacity;     // Maximum capacity of the dynamic array.
+  size_t m_size;         // Current number of elements in the array.
+  size_t m_min_capacity; // Minimum size of the array.
+  T* m_pValues;          // Pointer to the values stored in the array.
 
   /*
     Handles memory reallocation when the array size exceeds capacity
@@ -197,6 +198,12 @@ public:
    * @param remove The value to be removed.
    */
   void erase(const T&);
+
+  /**
+   * @brief Reserves memory for a specific number of elements.
+   * @param size The number of elements to reserve space for.
+   */
+  void reserve(const size_t);
 };
 
 #include "vector.tpp"

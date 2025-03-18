@@ -128,30 +128,6 @@ public:
   double mean();
 
   /**
-   * @brief Adds a new data point to the time series.
-   * Ensures that the data point is unique and maintains sorted order.
-   * @param year The year of the data point.
-   * @param value The associated value for that year.
-   * @return True if the data point was successfully added, false otherwise.
-   */
-  bool add_data_point(int, int);
-
-  /**
-   * @brief Prints all data points in the time series.
-   * Outputs each data point as a (year, value) pair.
-   */
-  void print() const;
-
-  /**
-   * @brief Updates the value of an existing data point.
-   * Finds the data point by year and updates its value if it exists.
-   * @param year The year of the data point to update.
-   * @param value The new value to assign to that year.
-   * @return True if the data point was successfully updated, false otherwise.
-   */
-  bool update_data_point(int, int);
-
-  /**
    * @brief Gets the name of the time series.
    * @return The name of the series as a string.
    */
