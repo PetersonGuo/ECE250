@@ -1,0 +1,20 @@
+CLASS DESIGN
+The classes implemented are Vector, Pair, TimeSeries, List, ListNode, ListIterator, and Country.
+
+The Vector class provides a dynamic array data structure with efficient memory management. It supports operations such as push_back, pop_back, insert, and clear while dynamically resizing its capacity to maintain performance. The initial capacity is set to 2 elements, and the resizing mechanism ensures that the capacity doubles when the array is full and halves when the size falls below a quarter of the capacity. However, the capacity never drops below 2, adhering to predefined constraints.
+
+The Pair class encapsulates two logically related values (e.g., year and value), allowing operations on grouped data. It provides getter functions for access and supports operator overloading for equality checks and assignments, simplifying its usage in contexts where paired data is required.
+
+The TimeSeries class combines the functionality of Vector and Pair to manage time-series data. It supports features such as loading data from input files, verifying monotonicity, calculating the mean and best-fit line, and adding or updating data points. The class reads and stores the series name and series code from input files, using dynamic arrays to store years and values. Missing data is ignored during input processing, ensuring only valid data is included. Caching mechanisms are incorporated to optimize performance for repeated operations, such as monotonicity checks and mean calculations.
+
+The List class implements a doubly linked list, consisting of a chain of ListNodes pointing to each other. The ListIterator class enables traversal of the List, facilitating iteration over elements in both forward and reverse directions.
+
+The Country class maintains the country name, country code, and a linked list of TimeSeries objects. It also implements caching to efficiently determine the time series with the largest mean. Computing the mean for each time series takes O(N * m) time, but caching significantly reduces redundant computations, improving performance on average.
+
+ALTERNATIVES AND JUSTIFICATION
+
+Initially, I considered using a Vector of TimeSeries since the Vector class was already implemented. However, I decided against this approach because the extra memory overhead of a dynamically resizable array was unnecessary. Instead, I chose a linked list for its superior insertion and deletion times. The O(N) search complexity of a linked list did not pose a disadvantage since the data was unsorted, which would have been the primary advantage of using a Vector.
+
+RUNTIME ANALYSIS
+
+The LIMITS command operates in O(log(NUM_NODES)) time in the best case and O(NUM_NODES) in the worst case, where NUM_NODES is the total number of nodes in the tree. In a perfectly balanced binary search tree, each level of the tree halves the remaining nodes, so finding the minimum or maximum country mean involves traversing a path of logarithmic length, hence O(log(NUM_NODES)). However, if the tree is unbalanced and degenerates into a structure similar to a linked list, every node must be inspected to locate the extreme values, leading to a worst-case performance of O(NUM_NODES).

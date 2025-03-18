@@ -6,21 +6,11 @@
   and print data points.
 */
 
-// Inline functions to get/set bit values
-#define SET_BIT(value, shift, set)                                             \
-  (value = (value & ~(1 << shift)) | (set << shift))
-#define GET_BIT(value, shift) ((value >> shift) & 1)
-
-// Bit indexes of cache bits used to represent m_cache
-#define MONOTONIC_BIT 0
-#define MEAN_BIT 1
-#define FIT_BIT 2
-
 #ifndef TIMESERIES
 #define TIMESERIES
 
-#include "data_structures/pair.hpp"
-#include "data_structures/vector.hpp"
+#include "../data_structures/include/pair.hpp"
+#include "../data_structures/include/vector.hpp"
 #include <sstream>
 #include <string>
 
@@ -32,22 +22,30 @@
   monotonicity, and determining the best-fit line.
 */
 
-class TimeSeries
-{
+class TimeSeries {
 private:
   Vector<Pair<int, double>>
-      m_data;           // Stores the time-series data as (year, value) pairs
+      m_data; // Stores the time-series data as (year, value) pairs
 
-  bool m_bIsMonotonic;  // Cached value indicating whether the data is monotonic
-  double m_mean;        // Cached mean value of the dataset
-  double m_slope,
-      m_intercept;      // Cached slope and intercept for the best-fit line
-
-  unsigned char m_cache; // Bitset used for caching calculations
-                         // Bits represent: [Monotonic, Mean, Fit]
+  double m_mean;  // Cached mean value of the dataset
+  bool m_cache;   // Bitset used to check if cache is valid
+  bool m_invalid; // Flag for an invalid TimeSeries
 
   std::string m_seriesName,
       m_seriesCode; // Stores the name and code of the time series
+
+  /**
+   * @brief Calculates the mean of the time-series data.
+   * @return The computed mean value.
+   */
+  double calc_mean();
+
+  /**
+   * @brief Resets the cached computed properties (monotonicity, mean,
+   * best-fit). Invalidates all cached values, forcing recalculation when
+   * needed.
+   */
+  void reset_cache();
 
 public:
   /**
@@ -123,40 +121,6 @@ public:
   void load(std::stringstream&);
 
   /**
-   * @brief Checks whether the time-series data is monotonic.
-   * @return True if the data is monotonic (non-increasing or non-decreasing),
-   * false otherwise.
-   */
-  bool calc_is_monotonic();
-
-  /**
-   * @brief Computes the slope and intercept of the best-fit line using linear
-   * regression.
-   */
-  void calc_best_fit();
-
-  /**
-   * @brief Calculates the mean of the time-series data.
-   * @return The computed mean value.
-   */
-  double calc_mean();
-
-  /**
-   * @brief Determines whether the data is monotonic.
-   * If not already cached, calculates and caches the result.
-   * @return True if the data is monotonic, false otherwise.
-   */
-  bool is_monotonic();
-
-  /**
-   * @brief Computes the best-fit line parameters.
-   * If not already cached, calculates and caches the result.
-   * @param slope Reference to store the computed slope.
-   * @param intercept Reference to store the computed intercept.
-   */
-  void best_fit(double&, double&);
-
-  /**
    * @brief Returns the mean of the time-series data.
    * If not already cached, calculates and caches the result.
    * @return The mean value of the data.
@@ -188,29 +152,28 @@ public:
   bool update_data_point(int, int);
 
   /**
-   * @brief Resets the cached computed properties (monotonicity, mean,
-   * best-fit). Invalidates all cached values, forcing recalculation when
-   * needed.
-   */
-  void reset_cache();
-
-  /**
    * @brief Gets the name of the time series.
    * @return The name of the series as a string.
    */
-  const std::string get_series_name() const;
+  const std::string& get_series_name() const;
 
   /**
    * @brief Gets the code of the time series.
    * @return The code of the series as a string.
    */
-  const std::string get_series_code() const;
+  const std::string& get_series_code() const;
 
   /**
    * @brief Gets the number of data points in the time series.
    * @return The size of the dataset.
    */
-  const size_t get_size() const;
+  size_t get_size() const;
+
+  /**
+   * @brief Returns a flag indicating if the TimeSeries contains valid data.
+   * @return The validity of the TimeSeries data.
+   */
+  bool invalid() const;
 };
 
 #endif // TIMESERIES
