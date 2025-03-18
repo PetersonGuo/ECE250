@@ -1,0 +1,26 @@
+CLASS DESIGN
+
+The classes I implemented were Vector, Pair, and TimeSeries.
+
+The Vector class was designed to provide a dynamic array data structure with efficient resizing. It includes operations such as push_back, pop_back, insert, and clear. The reallocation mechanism ensures memory is managed effectively, expanding or shrinking as necessary. The initial capacity of the array is set to 2 elements, and it follows the constraints that the capacity doubles when full and halves when the size falls to a quarter of the capacity, but never below 2.
+
+The Pair class encapsulates two related values, such as year and value, enabling logical grouping and simplifying operations that involve paired data. It provides getters and operator overloads for equality checks and assignments.
+
+The TimeSeries class integrates Vector and Pair to represent and manipulate time-series data. It includes functionalities for loading data, checking monotonicity, calculating mean and best-fit lines, and adding or updating data points. The class reads the Series Name and Series Code from the input file, and dynamically allocates arrays to store years and data. Missing data is ignored during input, ensuring that only valid entries are processed. Caching mechanisms enhance performance for repeated operations.
+
+ALTERNATIVES AND JUSTIFICATION
+
+I decided to implement the Vector class to create a reusable dynamic array structure, similar to C++'s std::vector. Embedding the dynamic array directly within TimeSeries was considered but rejected, as the standalone Vector class allows for broader applicability.
+
+For the Pair class, I chose to encapsulate year-value pairs instead of using two separate Vectors for years and values. This ensures data integrity and simplifies operations, as each pair remains logically and physically connected. Using separate arrays would have introduced complexity in maintaining alignment between years and data.
+
+For the TimeSeries class, caching mechanisms were implemented to optimize performance for repeated calculations, such as monotonicity checks and mean calculations. This approach avoids redundant computations and ensures efficient execution. Ignoring missing data during input was chosen to streamline processing and maintain consistency.
+
+RUNTIME ANALYSIS
+
+Runtime for the UPDATE command is O(N). A binary search (O(log N)) locates the year to be updated, followed by an insertion (O(N) in the worst case when elements need to be shifted). Thus, the combined runtime is O(log N + N) = O(N).
+
+Runtime for the MONOTONIC command has a best case of O(1), as the check may terminate early if the sequence breaks within the first few elements. The worst case is O(N), requiring a full iteration to verify monotonicity. Caching reduces subsequent calls to O(1) if the data has not been modified.
+
+The design choices prioritize clarity, modularity, and performance. The Vector and Pair abstractions ensure reusable, maintainable code, while the caching mechanisms enhance the efficiency of frequently executed operations. The constraints on the dynamic arrays ensure memory is used efficiently while adhering to project requirements.
+
