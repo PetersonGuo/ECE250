@@ -9,7 +9,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -90,11 +89,10 @@ void TimeSeries::load(std::stringstream& ss) {
   std::getline(ss, m_seriesName, ',');
   std::getline(ss, m_seriesCode, ',');
   while (!ss.eof()) {
-    double data;
     std::getline(ss, token, ',');
-    data = std::stod(token);
-    if (data != -1) {
-      m_data.emplace_back(i + 1960, data);
+    double num = std::stod(token);
+    if (num != -1) {
+      m_data.emplace_back(i + 1960, num);
       m_invalid = 0;
     }
     ++i;
@@ -120,63 +118,6 @@ double TimeSeries::mean() {
   }
 
   return m_mean;
-}
-
-bool TimeSeries::add_data_point(const int time, const int value) {
-  int l = 0, r = m_data.size() - 1;
-  while (l <= r) {
-    int m = (l + r) / 2;
-    if (m_data[m].getFirst() < time) {
-      l = m + 1;
-    } else if (m_data[m].getFirst() > time) {
-      r = m - 1;
-    } else {
-      std::cout << "failure" << std::endl;
-      return false;
-    }
-  }
-
-  m_data.emplace(l, time, value);
-  reset_cache();
-  std::cout << "success" << std::endl;
-  return true;
-}
-
-bool TimeSeries::update_data_point(int time, int value) {
-  long long n = m_data.size();
-  long long l = 0, r = n - 1;
-  while (l <= r) {
-    uint64_t m = (l + r) / 2;
-    if (m_data[m].getFirst() < time) {
-      l = m + 1;
-    } else if (m_data[m].getFirst() > time) {
-      r = m - 1;
-    } else {
-      l = m;
-      break;
-    }
-  }
-
-  if (l < n && m_data[l].getFirst() == time) {
-    m_data[l].getSecond() = value;
-    reset_cache();
-    std::cout << "success" << std::endl;
-    return true;
-  }
-  std::cout << "failure" << std::endl;
-  return false;
-}
-
-void TimeSeries::print() const {
-  if (!m_data.size()) {
-    std::cout << "failure" << std::endl;
-    return;
-  }
-
-  for (uint64_t i = 0; i < m_data.size(); ++i)
-    std::cout << '(' << m_data[i].getFirst() << "," << m_data[i].getSecond()
-              << ')' << " ";
-  std::cout << std::endl;
 }
 
 void TimeSeries::reset_cache() {

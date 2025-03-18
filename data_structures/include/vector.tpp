@@ -59,7 +59,8 @@ Vector<T>& Vector<T>::operator=(const Vector& other) {
 
     m_size = other.m_size;
     m_capacity = other.m_capacity;
-    resize(m_capacity);
+    delete[] m_pValues;
+    m_pValues = new T[m_capacity];
 
     // Copy elements from the other vector
     for (uint64_t i = 0; i < m_size; ++i)
@@ -70,8 +71,6 @@ Vector<T>& Vector<T>::operator=(const Vector& other) {
 
 template <typename T>
 Vector<T>::Vector(Vector&& other) noexcept {
-  close();
-
   // Transfer ownership of the data
   m_pValues = other.m_pValues;
   other.m_pValues = nullptr;
