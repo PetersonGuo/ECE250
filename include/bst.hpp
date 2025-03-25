@@ -29,6 +29,10 @@ public:
     */
     TreeNode(T data) : m_data(data), m_left(nullptr), m_right(nullptr) {}
 
+    T& operator*() {
+      return m_data;
+    }
+
     /*
       Returns a reference to the left child node.
       @return Reference to the left child pointer.
@@ -45,12 +49,56 @@ public:
       return m_right;
     }
 
+    friend class Tree;     // Allows the Tree class to access private members.
+    friend class Iterator; // Allows the Iterator class to access private
+                           // members.
+  };
+
+  class Iterator {
+  private:
+    TreeNode* m_node; // Pointer to the current node in the tree.
+
+    Iterator() : m_node(nullptr) {}
+
+    Iterator(TreeNode* node) : m_node(node) {}
+
+  public:
     /*
-      Returns a reference to the stored data.
-      @return Reference to the node's data.
+      Dereference operator returns a reference to the data value.
+      @return Reference to the data value.
     */
-    T& data() {
-      return m_data;
+    T& operator*() {
+      return m_node->m_data;
+    }
+
+    T* operator->() {
+      return &m_node->m_data;
+    }
+
+    Iterator left() {
+      return Iterator(m_node->m_left);
+    }
+
+    Iterator right() {
+      return Iterator(m_node->m_right);
+    }
+
+    /*
+      Equality operator checks if two iterators are equal.
+      @param other The iterator to compare against.
+      @return True if the iterators are equal, false otherwise.
+    */
+    bool operator==(const Iterator& other) const {
+      return m_node == other.m_node;
+    }
+
+    /*
+      Inequality operator checks if two iterators are not equal.
+      @param other The iterator to compare against.
+      @return True if the iterators are not equal, false otherwise.
+    */
+    bool operator!=(const Iterator& other) const {
+      return m_node != other.m_node;
     }
 
     friend class Tree; // Allows the Tree class to access private members.
@@ -101,11 +149,48 @@ public:
   }
 
   /*
-    Returns a const reference to the root node pointer.
-    @return Const reference to the root node.
+    Returns an iterator to the root node.
+    @return Iterator to the root node.
   */
-  TreeNode* root() const {
-    return m_root;
+  Iterator begin() {
+    return Iterator(m_root);
+  }
+
+  /*
+    Returns an iterator to the end of the tree.
+    @return Iterator to the end of the tree.
+  */
+  Iterator end() {
+    return Iterator(nullptr);
+  }
+
+  Iterator end() const {
+    return Iterator(nullptr);
+  }
+
+  Iterator begin() const {
+    return Iterator(m_root);
+  }
+
+  void insert(const T& data) {
+    TreeNode* node = new TreeNode(data);
+    TreeNode* parent = nullptr;
+    TreeNode* current = m_root;
+
+    while (current) {
+      parent = current;
+      if (data < current->m_data)
+        current = current->m_left;
+      else
+        current = current->m_right;
+    }
+
+    if (!parent)
+      m_root = node;
+    else if (data < parent->m_data)
+      parent->m_left = node;
+    else
+      parent->m_right = node;
   }
 };
 

@@ -10,8 +10,8 @@
 #define COUNTRY
 
 #include "time_series.hpp"
-#include "../data_structures/include/vector.hpp"
-#include "../data_structures/include/unordered_map.hpp"
+
+#include <unordered_map>
 
 /*
   Country class represents a collection of time-series data for a specific
@@ -20,32 +20,16 @@
   dataset.
 */
 class Country {
-public:
-  /**
-   * @brief Hash function object for computing the hash value of a series code.
-   */
-  class CountryHash {
-  public:
-    /**
-     * @brief Hash function to compute the hash value of a series code.
-     * @param seriesCode The series code to hash.
-     * @return The computed hash value.
-     */
-    unsigned long long operator()(const std::string&) const;
-  };
-
 private:
   std::string m_name, m_code; // Country name and code
-  static CountryHash m_hash;
-  Vector<std::string> m_seriesCodes; // List of series codes
-  Map<std::string, TimeSeries, CountryHash>
+  std::unordered_map<std::string, TimeSeries>
       m_series; // Stores all time-series data for the country
 
 public:
   /**
    * @brief Constructs an empty Country object.
    */
-  Country();
+  Country() = default;
 
   /**
    * @brief Copy constructor.
@@ -94,7 +78,8 @@ public:
   TimeSeries& dummy_series() const;
 
   /**
-   * @brief Loads time-series data for the given country.
+   * @brief Loads time-series data for the given country. Leaving the file open
+   * at the line past the last data point.
    * @param is Input filestream containing the country's data.
    * @return True if at EOF, false otherwise.
    */
@@ -103,13 +88,7 @@ public:
   /**
    * @brief Clears all stored data and resets the Country object.
    */
-  void close();
-
-  /**
-   * @brief Lists all available time-series datasets for the country.
-   * Prints the country name, code, and all stored series.
-   */
-  void list() const;
+  void clear();
 
   /**
    * @brief Retrieves the country's name.
@@ -122,12 +101,6 @@ public:
    * @return The country code as a string.
    */
   std::string get_country_code() const;
-
-  /**
-   * @brief Returns an iterator to the end of the list.
-   * @return Iterator pointing to the end of the list.
-   */
-  Map<std::string, TimeSeries, CountryHash>::Iterator end() const;
 };
 
 #endif

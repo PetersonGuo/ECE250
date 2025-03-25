@@ -1,5 +1,0 @@
-INSERT CAN lab2_multidata.csv
-INSERT AND lab2_multidata.csv
-LOOKUP CAN
-LOOKUP AND
-EXIT

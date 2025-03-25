@@ -1,84 +1,106 @@
 #include "../include/country_container.hpp"
-#include "../data_structures/include/file.hpp"
-#include "../data_structures/include/queue.hpp"
+#include "../include/file.hpp"
+#include "../include/algorithm.hpp"
 
+#include <queue>
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <cfloat>
 #include <cmath>
 
+using vec_iter = std::vector<std::string>::const_iterator;
+
+inline std::ostream&
+operator<<(std::ostream& out,
+           const std::tuple<std::string, double, RELATION>& tup) {
+  return out << '(' << std::get<0>(tup) << ' ' << std::get<1>(tup) << ' '
+             << std::get<2>(tup) << ')';
+}
+
+template <typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::vector<T>& vec) {
+  for (size_t i = 0; i < vec.size(); ++i)
+    out << vec[i] << (i == vec.size() - 1 ? "" : " ");
+  out << std::endl;
+  return out;
+}
+
 inline double CountryContainer::mid_range(const RangeContainer& range) const {
-  auto pair = range.get_range();
-  return (m_data.at(pair.getSecond())[m_seriesCode].mean() -
-          m_data.at(pair.getFirst())[m_seriesCode].mean()) /
+  std::pair<std::string, std::string> pair = range.get_range();
+  return (m_data.at(pair.second)[m_seriesCode].mean() -
+          m_data.at(pair.first)[m_seriesCode].mean()) /
              2.0 +
-         m_data.at(pair.getFirst())[m_seriesCode].mean();
+         m_data.at(pair.first)[m_seriesCode].mean();
 }
 
-inline int CountryContainer::CountryContainerHash::hash2(unsigned int W) const {
-  unsigned int f = floor(W / (double)512);
-  return f % 512 + (~f & 1);
+void CountryContainer::initialize() {
+  m_graph.clear();
+  for (const std::string& i : m_countryCodes)
+    m_graph.add_node(i);
 }
 
-inline int CountryContainer::CountryContainerHash::hash1(unsigned int W) const {
-  return W % 512;
+bool CountryContainer::update_edges(const std::string& seriesCode,
+                                    double threshold, RELATION relation) {
+  bool fail = 1;
+  build(seriesCode);
+  const std::vector<std::string> countries = find(threshold, relation);
+  for (vec_iter i = countries.begin(); i != countries.end(); ++i)
+    for (vec_iter j = i + 1; j != countries.end(); ++j)
+      if (m_graph.add_edge(*i, *j, {seriesCode, threshold, relation}) &&
+          m_graph.add_edge(*j, *i, {seriesCode, threshold, relation}))
+        fail = 0;
+  return !fail;
 }
 
-int CountryContainer::CountryContainerHash::hash(const std::string& countryCode,
-                                                 unsigned int* comps) const {
-  const unsigned int m = 512;
-  unsigned int W = 0;
-  unsigned int n = countryCode.size();
-  for (unsigned int i = 0; i < n; ++i) {
-    W = W * 26 + (countryCode[i] - 'A');
+void CountryContainer::adjacent(const std::string& countryCode) {
+  if (!m_graph.has_node(countryCode))
+    std::cout << "failure" << std::endl;
+  else if (!m_graph.get_edges(countryCode).size())
+    std::cout << "none" << std::endl;
+  else {
+    std::vector<std::string> countries;
+    for (const std::pair<const std::string, Graph::relations_set>& i :
+         m_graph.get_edges(countryCode))
+      countries.push_back(m_data.at(i.first).get_country_name());
+    std::cout << countries;
   }
+}
 
-  unsigned int i = 0, key;
-  unsigned int firstAvailable = m;
-  while (true) {
-    key = (hash1(W) + i * hash2(W)) % m;
-    ++i;
-
-    if (!m_data[key]->used()) {
-      if (firstAvailable == m)
-        firstAvailable = key;
-      break;
-    } else {
-      if (!m_data[key]->empty() && (*m_data[key]).getFirst() == countryCode) {
-        firstAvailable = m;
-        break;
-      } else if (m_data[key]->empty() && firstAvailable == m) {
-        firstAvailable = key;
+bool CountryContainer::path(const std::string& countryCode1,
+                            const std::string& countryCode2) {
+  std::unordered_set<std::string> visited;
+  std::queue<std::string> q;
+  q.push(countryCode1);
+  visited.insert(countryCode1);
+  while (!q.empty()) {
+    std::string current = q.front();
+    q.pop();
+    for (const std::pair<const std::string, Graph::relations_set>& i :
+         m_graph.get_edges(current)) {
+      if (i.first == countryCode2)
+        return true;
+      if (!visited.count(i.first)) {
+        visited.insert(i.first);
+        q.push(i.first);
       }
     }
   }
-
-  if (comps)
-    *comps = i;
-
-  return firstAvailable != m ? firstAvailable : key;
+  return false;
 }
 
-int CountryContainer::CountryContainerHash::operator()(
-    const std::string& countryCode) const {
-  return hash(countryCode, nullptr);
-}
-
-// Prints a list of countries.
-void CountryContainer::print_list(const List<std::string>& list) const {
-  for (List<std::string>::Iterator it = list.begin(); it != list.end(); ++it)
-    std::cout << m_data.at(*it).get_country_name() << ' ';
-}
-
-// Constructor initializes an empty CountryContainer with size 0.
-CountryContainer::CountryContainer()
-    : m_size(0), m_hash(m_data), m_data(m_hash) {
-  m_data.set_capacity(512);
-}
-
-bool CountryContainer::contains(const std::string& key) const {
-  return m_data.contains(key);
+void CountryContainer::relationships(const std::string& countryCode1,
+                                     const std::string& countryCode2) {
+  if (!m_graph.has_edge(countryCode1, countryCode2))
+    std::cout << "none" << std::endl;
+  else {
+    const Graph::relations_vector& relations =
+        m_graph.get_relations_ordered(countryCode1, countryCode2);
+    for (const std::tuple<std::string, double, RELATION>& i : relations)
+      std::cout << "(" << std::get<0>(i) << " " << std::get<1>(i) << " "
+                << std::get<2>(i) << ") ";
+    std::cout << std::endl;
+  }
 }
 
 // Loads country data from a file.
@@ -87,8 +109,6 @@ void CountryContainer::load(const std::string& filename) {
   std::stringstream ss;
   std::string line, code;
   bool ret = 1;
-  int index = 0;
-
 
   is.open(filename);
 
@@ -97,243 +117,103 @@ void CountryContainer::load(const std::string& filename) {
 
   // Read country data until EOF
   while (ret) {
-    peek_line(is, line);
+    peekline(is, line);
     ss.str(line);
     std::getline(ss, line, ',');
     std::getline(ss, code, ',');
 
     ret = m_data[code].load(is);
-    ++index;
+    m_countryCodes.push_back(code);
   }
 
-  m_size = index;
   is.close();
 }
 
-// Lists all time-series data for a specific country.
-void CountryContainer::list(const std::string& countryName) const {
-  for (auto& i : m_data) {
-    if (i.getSecond().get_country_name() == countryName) {
-      i.getSecond().list();
-      break;
-    }
-  }
-}
-
 void CountryContainer::print() {
-  Queue<Tree<RangeContainer>::TreeNode*> q;
-  q.push(m_tree.root());
+  std::queue<std::pair<Tree<RangeContainer>::Iterator, int>> q;
+  q.push({m_tree.begin(), 0});
   while (!q.empty()) {
-    Tree<RangeContainer>::TreeNode* node = q.pop();
-    if (node) {
-      std::cout
-          << "Range: " << node->data().get_range().getFirst() << " "
-          << m_data.at(node->data().get_range().getFirst())[m_seriesCode].mean()
-          << " " << node->data().get_range().getSecond() << " "
-          << m_data.at(node->data().get_range().getSecond())[m_seriesCode]
-                 .mean()
-          << std::endl;
-      q.push(node->left());
-      q.push(node->right());
+    auto [node, rank] = q.front();
+    q.pop();
+    if (node != m_tree.end()) {
+      std::cout << "Range: " << node->get_range().first << " "
+                << m_data.at(node->get_range().first)[m_seriesCode].mean()
+                << " " << node->get_range().second << " "
+                << m_data.at(node->get_range().second)[m_seriesCode].mean()
+                << " " << rank << std::endl;
+      q.push({node.left(), rank + 1});
+      q.push({node.right(), rank + 1});
     }
   }
-}
-
-// Computes the min and max mean values across all countries for a given series.
-Pair<double, double>
-CountryContainer::range(const std::string& seriesCode) const {
-  double min = DBL_MAX, max = DBL_MIN;
-
-  for (auto& i : m_data) {
-    TimeSeries& series = i.getSecond()[seriesCode];
-
-    if (!series.invalid()) {
-      double mean = series.mean();
-      min = fmin(min, mean);
-      max = fmax(max, mean);
-    }
-  }
-
-  return {min, max};
 }
 
 // Builds a binary tree of countries sorted by mean values.
 void CountryContainer::build(const std::string& seriesCode) {
   m_tree.clear();
   m_seriesCode = seriesCode;
-  m_tree.root() = build_helper(-DBL_MAX, DBL_MAX);
+  algorithm::sort(m_countryCodes.begin(), m_countryCodes.end(),
+                  [this](const std::string& a, const std::string& b) {
+                    return m_data.at(a)[m_seriesCode].mean() <
+                           m_data.at(b)[m_seriesCode].mean();
+                  });
+  m_tree.root() = build_helper(0, m_countryCodes.size() - 1, m_countryCodes);
 }
 
 // Recursively builds the tree.
 Tree<CountryContainer::RangeContainer>::TreeNode*
-CountryContainer::build_helper(double rangeMin, double rangeMax) {
-  if (fabs(rangeMin - rangeMax) <= 1e-3)
+CountryContainer::build_helper(int left, int right,
+                               const std::vector<std::string>& data) {
+  if (left > right)
     return nullptr;
 
-  RangeContainer container;
-  std::string min, max;
+  RangeContainer container(data[left], data[right], data.begin() + left,
+                           data.begin() + right + 1);
 
-  // Iterate by reference and only consider countries in the [rangeMin,
-  // rangeMax] interval.
-  for (Pair<std::string, Country>& item : m_data) {
-    double mean = item.getSecond()[m_seriesCode].mean();
-    if (rangeMin <= mean && mean < rangeMax) {
-      container.get_countries().push_back(item.getFirst());
-      // Update min and max within the filtered set.
-      if (min == "" || mean < m_data.at(min)[m_seriesCode].mean())
-        min = item.getFirst();
-      if (max == "" || mean > m_data.at(max)[m_seriesCode].mean())
-        max = item.getFirst();
-    }
-  }
-
-  assert(min != "" && "Min should not be empty");
-  assert(max != "" && "Max should not be empty");
-
-  // Set the range in the container using the filtered countries.
-  double currentMin = m_data.at(min)[m_seriesCode].mean();
-  double currentMax = m_data.at(max)[m_seriesCode].mean();
-
-  container.set_range(min, max);
-  double currentMid = mid_range(container);
-
-  // If no country falls into the range, nothing to do.
-  if (container.get_countries().empty())
-    return nullptr;
+  long mid =
+      algorithm::lower_bound(data.begin() + left, data.begin() + right + 1,
+                             mid_range(container),
+                             [this](const std::string& a, const double b) {
+                               return m_data.at(a)[m_seriesCode].mean() < b;
+                             }) -
+      data.begin();
 
   // Create the current node.
   Tree<RangeContainer>::TreeNode* current =
       new Tree<RangeContainer>::TreeNode(container);
 
+  if (fabs(m_data.at(data[left])[m_seriesCode].mean() -
+           m_data.at(data[right - 1])[m_seriesCode].mean()) <= 1e-3 ||
+      left == right)
+    return current;
+
   // Recursively build left and right subtrees.
-  current->left() = build_helper(currentMin, currentMid);
-  current->right() = build_helper(currentMid, currentMax + 1e-6);
+  current->left() = build_helper(left, mid - 1, data);
+  current->right() = build_helper(mid, right, data);
 
   return current;
 }
 
 // Searches for countries based on mean value comparisons.
-void CountryContainer::find(const double target, const char op) const {
-  if (!m_tree.root()) {
-    std::cout << "failure\n";
-    return;
-  }
+std::vector<std::string> CountryContainer::find(const double target,
+                                                const RELATION op) const {
+  if (m_tree.begin() == m_tree.end())
+    return {};
 
-  List<std::string> data = m_tree.root()->data().get_countries();
-  for (List<std::string>::Iterator it = data.begin(); it != data.end(); ++it) {
-    std::string countryCode = *it;
-    double mean = m_data.at(countryCode)[m_seriesCode].mean();
+  std::vector<std::string> result;
+  const std::vector<std::string>& data = m_tree.begin()->get_countries();
+  for (RangeContainer::const_iterator it = data.begin(); it != data.end();
+       ++it) {
+    double mean = m_data.at(*it)[m_seriesCode].mean();
 
     if (fabs(mean - target) <= 1e-3) {
-      if (op == 0)
-        std::cout << m_data.at(countryCode).get_country_name() << " ";
+      if (op == EQUAL)
+        result.push_back(*it);
     } else {
-      if (op == -1 && mean < target) {
-        std::cout << m_data.at(countryCode).get_country_name() << " ";
-      } else if (op == 1 && mean > target) {
-        std::cout << m_data.at(countryCode).get_country_name() << " ";
-      }
+      if (op == LESS && mean < target)
+        result.push_back(*it);
+      else if (op == GREATER && mean > target)
+        result.push_back(*it);
     }
   }
-  std::cout << std::endl;
-}
-
-// Deletes a country from the data structure.
-bool CountryContainer::delete_country(const std::string& countryName) {
-  if (!m_tree.root())
-    return false;
-  for (auto& i : m_data)
-    if (i.getSecond().get_country_name() == countryName)
-      return delete_country_helper(m_tree.root(),
-                                   i.getSecond().get_country_code());
-  return false;
-}
-
-// Helper function for recursively deleting a country.
-bool CountryContainer::delete_country_helper(
-    Tree<RangeContainer>::TreeNode* node, const std::string& countryCode) {
-  if (!node)
-    return false;
-
-  List<std::string>& bucket = node->data().get_countries();
-  for (auto it = bucket.begin(); it != bucket.end(); ++it) {
-    if (*it == countryCode) {
-      bucket.erase(it);
-      if (mid_range(node->data()) > m_data.at(countryCode)[m_seriesCode].mean())
-        delete_country_helper(node->left(), countryCode);
-      else
-        delete_country_helper(node->right(), countryCode);
-      return true;
-    }
-  }
-
-  return false;
-}
-
-// Finds and prints the lowest or highest value node in the tree.
-void CountryContainer::limits(bool condition) const {
-  Tree<RangeContainer>::TreeNode *root = m_tree.root(), *prev = nullptr;
-
-  // Traverse left for min, right for max
-  if (condition) {
-    while (root) {
-      prev = root;
-      root = root->left();
-    }
-  } else {
-    while (root) {
-      prev = root;
-      root = root->right();
-    }
-  }
-
-  if (!prev)
-    std::cout << "failure";
-  else
-    print_list(prev->data().get_countries());
-  putchar('\n');
-}
-
-Pair<int, unsigned int>
-CountryContainer::lookup(std::string& countryCode) const {
-  unsigned int comp = 0;
-  return {m_hash.hash(countryCode, &comp), comp};
-}
-
-bool CountryContainer::remove(std::string& countryCode) {
-  if (!m_data.contains(countryCode))
-    return false;
-  delete_country(m_data.at(countryCode).get_country_name());
-  m_data.erase(countryCode);
-  return true;
-}
-
-bool CountryContainer::insert(std::string& countryCode, std::string& filename) {
-  if (m_data.contains(countryCode))
-    return false;
-
-  std::ifstream is;
-  std::stringstream ss;
-
-  is.open(filename);
-
-  if (is.fail())
-    std::cout << "invalid file" << std::endl;
-
-  // Read country data until EOF
-  std::string line, code;
-  while (!is.eof()) {
-    peek_line(is, line);
-    ss.str(line);
-    std::getline(ss, code, ',');
-    std::getline(ss, code, ',');
-    if (code == countryCode)
-      break;
-    std::getline(is, line);
-  }
-
-  m_data[countryCode].load(is);
-
-  is.close();
-  return true;
+  return result;
 }
