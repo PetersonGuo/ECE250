@@ -13,7 +13,7 @@ all: $(TARGET)
 
 # Compile everything in one step (no object files)
 $(TARGET): $(SRCS)
-	$(CXX) $(CXXFLAGS) -O3 $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 # Clean
 clean:
@@ -24,4 +24,4 @@ run: all
 	./$(TARGET)
 
 debug:
-	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) -g
+	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET) -g -O0

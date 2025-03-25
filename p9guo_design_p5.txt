@@ -1,0 +1,31 @@
+CLASS DESIGN
+
+Since the standard C++ library is permitted, I replaced my custom implementations with the official std:: versions, which are more efficient and thoroughly tested, thereby reducing the likelihood of unforeseen errors. I retained my custom unordered_map implementation to preserve the lookup functionality from Project 4. I also maintained my overall class design from previous projects by keeping the TimeSeries, Country, CountryContainer, and BST classes, as they were well abstracted and only needed minor modifications to meet the desired functionality. Additionally, I introduced a new Graph class that stores relationships between nodes and enables rapid lookups of these connections.
+
+The TimeSeries class manages time-series data using a vector of pairs that holds the series code, series name, and the associated data. It loads data from CSV lines using a stringstream and employs mean caching to improve performance. This caching ensures that, if the data remains unchanged for an extended period, repeated calls to mean() run in constant time rather than linear time. The default constructor marks a TimeSeries as invalid and sets its mean to zero when no data is loaded.
+
+The Country class encapsulates a country’s name, code, and a map of TimeSeries objects. It loads data by accepting a filestream pointing to the first CSV line for a country, then creates TimeSeries objects for every subsequent line that matches the country’s code and name, leaving the filestream positioned after the last relevant line. This design enables constant-time lookup of a TimeSeries by its code, as each TimeSeries is stored as a value in a hash table. If an invalid TimeSeries is queried, it returns a default-initialized TimeSeries.
+
+The CountryContainer class implements all the required functionality for the test commands using snake_case functions that mirror those commands. It coordinates the BST and Graph classes, which serve solely as data holders, while CountryContainer is responsible for inserting data into these structures. It also implements a probing hash function for the custom hash table. When comparing an invalid TimeSeries to a valid one, it treats the invalid queried TimeSeries as if it were valid, making no changes for invalid data.
+
+The Graph class manages nodes and edges along with their associated data using a nested hash table structure. At the first level, a hash table maps each node's string code to a second-level hash table. This secondary hash table maps the string code of a directly connected node—representing an edge—to a hash set that stores the tuple relationships associated with that edge.
+
+The BST class encapsulates tree nodes that store data and maintain pointers to their left and right children. It also keeps a reference to the root node, which serves as the starting point for tree traversal. This class provides the basic structure of a binary search tree and expects users to manage data insertion appropriately.
+
+ALTERNATIVES AND JUSTIFICATION
+
+Initially, I considered retaining my custom implementations of the ADTs, but I ultimately decided to switch to the standard library versions. Since my custom ADTs provided the same functions as the standard ones, albeit with different implementations, it was straightforward to convert them. The standard implementations are likely more efficient and reliable, whereas my custom versions were largely untested. I kept the custom hash table since it allows me to keep the functionality of Project 4 commands.
+
+I chose to store TimeSeries objects within the Country class using an unordered_map. This approach offers much faster and simpler lookups compared to using a linked list of TimeSeries, and it also improves cache efficiency.
+
+I also opted to represent the LESS, GREATER, and EQUAL values as an enum instead of strings. This decision simplified comparisons, and by overloading the << and >> operators, I made input and output as straightforward as working with strings.
+
+I explored various ways to store the graph, including using a hash table with tuple keys and a union-find hash table mapping strings to strings. However, I decided against these options because they introduced unnecessary complexity, especially for path-finding. Ultimately, I chose to implement an adjacency list for each node, which allows for fast lookups of nodes and their relationships while simplifying the implementation of path-finding algorithms and finding adjacent nodes.
+
+Finally, I decided to provide only the basic structure of the tree, leaving full function implementation to the user. Implementing all tree functions, such as supporting custom comparators, would have added unnecessary complexity.
+
+RUNTIME ANALYSIS
+
+The ADJACENT command operates in ammortized O(E) time, where E is the number of edges connected to a node. The worst case is O(E + N) due to resizing and rehashing. Each node is stored in a hash table, and its adjacent nodes are maintained in a nested hash table. Because hash table lookups are ammortized O(1) [1], finding the queried country takes constant time. After that, iterating over the adjacent nodes requires O(E) time, as you traverse through each edge linked to the country. Thus, the overall complexity of the ADJACENT command is ammortized O(E).
+
+[1] “STD::UNORDERED_MAP::at,” cppreference.com, https://en.cppreference.com/w/cpp/container/unordered_map/at (accessed Mar. 29, 2025).

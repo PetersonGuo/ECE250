@@ -26,7 +26,7 @@ TimeSeries::TimeSeries(const TimeSeries& other)
       m_seriesCode(other.m_seriesCode) {}
 
 TimeSeries::~TimeSeries() {
-  close();
+  clear();
 }
 
 TimeSeries& TimeSeries::operator=(const TimeSeries& other) {
@@ -46,7 +46,7 @@ TimeSeries::TimeSeries(TimeSeries&& other) noexcept
       m_cache(other.m_cache), m_invalid(other.m_invalid),
       m_seriesName(std::move(other.m_seriesName)),
       m_seriesCode(std::move(other.m_seriesCode)) {
-  other.close();
+  other.clear();
 }
 
 TimeSeries& TimeSeries::operator=(TimeSeries&& other) noexcept {
@@ -57,23 +57,13 @@ TimeSeries& TimeSeries::operator=(TimeSeries&& other) noexcept {
     m_invalid = other.m_invalid;
     m_seriesName = std::move(other.m_seriesName);
     m_seriesCode = std::move(other.m_seriesCode);
-    other.close();
+    other.clear();
   }
   return *this;
 }
 
-bool TimeSeries::operator==(const TimeSeries& other) const {
-  return (m_seriesName == other.m_seriesName &&
-          m_seriesCode == other.m_seriesCode);
-}
-
-bool TimeSeries::operator!=(const TimeSeries& other) const {
-  return (m_seriesName != other.m_seriesName ||
-          m_seriesCode != other.m_seriesCode);
-}
-
-void TimeSeries::close() {
-  m_data.close();
+void TimeSeries::clear() {
+  m_data.clear();
   m_seriesCode.clear();
   m_seriesName.clear();
   m_mean = 0.0;
@@ -84,7 +74,7 @@ void TimeSeries::load(std::stringstream& ss) {
   uint64_t i = 0;
   std::string token;
 
-  close();
+  clear();
   m_data.reserve(2024 - 1960);
 
   std::getline(ss, m_seriesName, ',');
@@ -105,7 +95,7 @@ double TimeSeries::calc_mean() {
   uint64_t i;
   double sum = 0;
   for (i = 0; i < m_data.size(); ++i)
-    sum += m_data[i].getSecond();
+    sum += m_data[i].second;
   if (m_data.size())
     m_mean = sum / m_data.size();
   return m_mean;
@@ -120,20 +110,12 @@ double TimeSeries::mean() {
   return m_mean;
 }
 
-void TimeSeries::reset_cache() {
-  m_cache = 0;
-}
-
 const std::string& TimeSeries::get_series_name() const {
   return m_seriesName;
 }
 
 const std::string& TimeSeries::get_series_code() const {
   return m_seriesCode;
-}
-
-size_t TimeSeries::get_size() const {
-  return m_data.size();
 }
 
 bool TimeSeries::invalid() const {

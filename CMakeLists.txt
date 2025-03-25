@@ -22,16 +22,6 @@ set(SOURCES
     ${CMAKE_SOURCE_DIR}/src/time_series.cpp
 )
 
-# Manually add missing headers to the build system
-set(HEADERS
-    ${CMAKE_SOURCE_DIR}/data_structures/include/vector.hpp
-    ${CMAKE_SOURCE_DIR}/data_structures/include/list.hpp
-    ${CMAKE_SOURCE_DIR}/data_structures/include/pair.hpp
-)
-
-# Tell CMake that these headers exist
-add_custom_target(headers SOURCES ${HEADERS})
-
 # Create the executable
 add_executable(main ${SOURCES})
 

@@ -9,10 +9,9 @@
 #ifndef TIMESERIES
 #define TIMESERIES
 
-#include "../data_structures/include/pair.hpp"
-#include "../data_structures/include/vector.hpp"
 #include <sstream>
 #include <string>
+#include <vector>
 
 /*
   TimeSeries class represents a dataset containing time-series data points,
@@ -24,7 +23,7 @@
 
 class TimeSeries {
 private:
-  Vector<Pair<int, double>>
+  std::vector<std::pair<int, double>>
       m_data; // Stores the time-series data as (year, value) pairs
 
   double m_mean;  // Cached mean value of the dataset
@@ -39,13 +38,6 @@ private:
    * @return The computed mean value.
    */
   double calc_mean();
-
-  /**
-   * @brief Resets the cached computed properties (monotonicity, mean,
-   * best-fit). Invalidates all cached values, forcing recalculation when
-   * needed.
-   */
-  void reset_cache();
 
 public:
   /**
@@ -94,24 +86,10 @@ public:
   TimeSeries& operator=(TimeSeries&&) noexcept;
 
   /**
-   * @brief Equality operator to compare two TimeSeries objects.
-   * @param other The TimeSeries object to compare with.
-   * @return True if both objects represent the same series, false otherwise.
-   */
-  bool operator==(const TimeSeries&) const;
-
-  /**
-   * @brief Inequality operator to compare two TimeSeries objects.
-   * @param other The TimeSeries object to compare with.
-   * @return True if the objects represent different series, false otherwise.
-   */
-  bool operator!=(const TimeSeries&) const;
-
-  /**
    * @brief Clears all data and resets the TimeSeries object to its initial
    * state.
    */
-  void close();
+  void clear();
 
   /**
    * @brief Loads time-series data from an input stream.
@@ -138,12 +116,6 @@ public:
    * @return The code of the series as a string.
    */
   const std::string& get_series_code() const;
-
-  /**
-   * @brief Gets the number of data points in the time series.
-   * @return The size of the dataset.
-   */
-  size_t get_size() const;
 
   /**
    * @brief Returns a flag indicating if the TimeSeries contains valid data.

@@ -1,10 +1,12 @@
 #ifndef COUNTRY_CONTAINER
 #define COUNTRY_CONTAINER
 #include "country.hpp"
-#include "../data_structures/include/list.hpp"
-#include "../data_structures/include/unordered_map.hpp"
+#include "../include/relation.hpp"
+#include "../include/graph.hpp"
 #include "bst.hpp"
+
 #include <string>
+#include <unordered_map>
 
 /*
   The CountryContainer class is responsible for managing multiple Country
@@ -22,9 +24,30 @@ private:
   class RangeContainer {
   private:
     std::string m_min, m_max;
-    List<std::string> m_countries; // List of countries within the range.
+    std::vector<std::string> m_countries; // List of countries within the range.
 
   public:
+    using iterator = std::vector<std::string>::iterator;
+    using const_iterator = std::vector<std::string>::const_iterator;
+
+    /*
+      Default constructor initializes an empty RangeContainer.
+    */
+    RangeContainer() = default;
+
+    /*
+      Parameterized constructor initializes a RangeContainer with a minimum and
+      maximum country name, along with a list of countries.
+      @param min The name of the minimum country.
+      @param max The name of the maximum country.
+      @param begin Iterator to the beginning of the country list.
+      @param end Iterator to the end of the country list.
+    */
+    RangeContainer(const std::string& min, const std::string& max,
+                   std::vector<std::string>::const_iterator begin,
+                   std::vector<std::string>::const_iterator end)
+        : m_min(min), m_max(max), m_countries(begin, end) {}
+
     /*
       Sets the minimum and maximum Country objects for the range.
       @param min The name of the minimum country.
@@ -38,9 +61,9 @@ private:
     /*
       Returns a pair containing references to the minimum and maximum Country
       objects.
-      @return A Pair object containing m_min and m_max.
+      @return A std::pair object containing m_min and m_max.
     */
-    Pair<std::string, std::string> get_range() const {
+    std::pair<std::string, std::string> get_range() const {
       return {m_min, m_max};
     }
 
@@ -48,141 +71,15 @@ private:
       Returns the list of Country pointers stored in this RangeContainer.
       @return Reference to the list of countries.
     */
-    List<std::string>& get_countries() {
+    std::vector<std::string>& get_countries() {
       return m_countries;
     }
   };
 
   /*
-    The CountryContainerHash class is a custom hash function object for
-    hashing country names.
-  */
-  class CountryContainerHash {
-  private:
-    Map<std::string, Country, CountryContainerHash>& m_data;
-
-    /*
-      Computes a hash value for a given integer.
-      @param key The integer to hash.
-      @return The computed hash value.
-    */
-    int hash2(unsigned int) const;
-
-    /*
-      Computes a hash value for a given integer.
-      @param key The integer to hash.
-      @return The computed hash value.
-    */
-    int hash1(unsigned int) const;
-
-    /*
-      Computes a hash value for a given string.
-      @param countryCode The string to hash.
-      @return The computed hash value.
-    */
-    int hash(const std::string&) const;
-
-  public:
-    /*
-      Parameterized constructor initializes the hash function with a reference
-      to the country data map.
-      @param data Reference to the map of country data.
-    */
-    CountryContainerHash(Map<std::string, Country, CountryContainerHash>& data)
-        : m_data(data) {}
-
-    /*
-      Computes a hash value for a given string.
-      @param countryCode The string to hash.
-      @return The computed hash value.
-    */
-    int operator()(const std::string&) const;
-
-    /*
-      Computes a hash value for a given string.
-      @param countryCode The string to hash.
-      @param comps Pointer to store the number of comparisons made.
-      @return The computed hash value.
-    */
-    int hash(const std::string&, unsigned int*) const;
-  };
-
-  /*
-    Prints the list of countries stored in the provided List object.
-    @param list The List object containing Country pointers to print.
-  */
-  void print_list(const List<std::string>&) const;
-
-  /*
     Prints the tree of countries stored in the provided binary tree object.
   */
   void print();
-
-  /*
-    Recursively builds the tree structure from country data.
-    @param start Start index for the range.
-    @param end End index for the range.
-    @param node Reference to the tree node being constructed.
-  */
-  Tree<RangeContainer>::TreeNode* build_helper(double, double);
-
-  /*
-    Computes the mid-range value for a given RangeContainer.
-    @param range The RangeContainer object to compute the mid-range for.
-    @return The mid-range value.
-  */
-  double mid_range(const RangeContainer& range) const;
-
-  /*
-    Helper function for deleting a country from the tree.
-    @param node Pointer to the tree node being checked for deletion.
-    @param countryName The name of the country to delete.
-    @return True if the country was successfully deleted, false otherwise.
-  */
-  bool delete_country_helper(Tree<RangeContainer>::TreeNode*,
-                             const std::string&);
-
-  static const unsigned int m_dataSize = 512;
-  Tree<RangeContainer>
-      m_tree;               // Binary tree used for range-based country storage.
-  std::size_t m_size;       // Number of countries stored.
-  std::string m_seriesCode; // Series code for identifying data.
-
-  CountryContainerHash m_hash;
-
-  Map<std::string, Country, CountryContainerHash>
-      m_data; // Map to store country data.
-
-public:
-  /*
-    Default constructor initializes an empty CountryContainer.
-  */
-  CountryContainer();
-
-  /*
-    Checks if a country with the given name exists in the container.
-    @param countryName The name of the country to search for.
-  */
-  bool contains(const std::string&) const;
-
-  /*
-    Loads country data from a file.
-    @param filename The name of the file to read data from.
-  */
-  void load(const std::string&);
-
-  /*
-    Lists all countries stored in the container.
-    @param seriesCode The code used to filter which series to list.
-  */
-  void list(const std::string&) const;
-
-  /*
-    Computes the range of values for a given series.
-    @param seriesCode The code used to determine which series to analyze.
-    @return A Pair containing the minimum and maximum values in the range.
-  */
-  Pair<double, double> range(const std::string&) const;
 
   /*
     Builds the tree structure based on country data.
@@ -192,45 +89,57 @@ public:
   void build(const std::string&);
 
   /*
+    Recursively builds the tree structure from country data.
+    @param start Start index for the range.
+    @param end End index for the range.
+    @param node Reference to the tree node being constructed.
+  */
+  Tree<RangeContainer>::TreeNode*
+  build_helper(int left, int right, const std::vector<std::string>& data);
+
+  /*
+    Computes the mid-range value for a given RangeContainer.
+    @param range The RangeContainer object to compute the mid-range for.
+    @return The mid-range value.
+  */
+  double mid_range(const RangeContainer& range) const;
+
+  /*
     Finds and prints all countries that match a given condition.
     @param value The threshold value to compare against.
-    @param condition The condition character ('<' or '>') to filter results.
+    @param condition The relation to filter results.
   */
-  void find(const double, const char) const;
+  std::vector<std::string> find(const double, const RELATION) const;
+
+  Tree<RangeContainer>
+      m_tree;               // Binary tree used for range-based country storage.
+  std::string m_seriesCode; // Series code for identifying data.
+
+  std::unordered_map<std::string, Country> m_data; // Map to store country data.
+
+  std::vector<std::string> m_countryCodes;
+  Graph m_graph;
+
+public:
+  /*
+    Default constructor initializes an empty CountryContainer.
+  */
+  CountryContainer() = default;
+
+  void initialize();
+
+  bool update_edges(const std::string&, double, RELATION);
+
+  void adjacent(const std::string&);
+
+  bool path(const std::string&, const std::string&);
+
+  void relationships(const std::string&, const std::string&);
 
   /*
-    Deletes a country from the container.
-    @param countryName The name of the country to delete.
-    @return True if the country was successfully deleted, false otherwise.
+    Loads country data from a file.
+    @param filename The name of the file to read data from.
   */
-  bool delete_country(const std::string&);
-
-  /*
-    Finds the min/max means in the BST
-    @param condition Boolean flag indicating if looking for min
-  */
-  void limits(bool) const;
-
-  /*
-    Looks up a country in the container.
-    @param countryCode The code of the country to search for.
-    @return A Pair containing the index and number of searches.
-  */
-  Pair<int, unsigned int> lookup(std::string&) const;
-
-  /*
-    Removes a country from the container.
-    @param countryCode The code of the country to remove.
-    @return True if the country was successfully removed, false otherwise.
-  */
-  bool remove(std::string&);
-
-  /*
-    Inserts a new country into the container.
-    @param countryCode The code of the country to insert.
-    @param filename The name of the file containing the country data.
-    @return True if the country was successfully inserted, false otherwise.
-  */
-  bool insert(std::string&, std::string&);
+  void load(const std::string&);
 };
 #endif

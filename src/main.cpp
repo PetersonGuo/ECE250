@@ -5,8 +5,8 @@
   add/update points, compute mean, check monotonicity, calculate the best-fit
   line, and exit the program.
 */
-
 #include "../include/country_container.hpp"
+#include "../include/relation.hpp"
 #include <iostream>
 #include <string>
 
@@ -17,68 +17,38 @@ int main() {
   // Command processing loop.
   while (std::cin >> cmd) {
     if (cmd == "LOAD") {
-      // Load data from a file.
       std::string fileName;
       std::cin >> fileName;
       container.load(fileName);
       std::cout << "success" << std::endl;
-    } else if (cmd == "LIST") {
-      std::string countryName;
-      getchar();
-      std::getline(std::cin, countryName);
-      container.list(countryName);
-    } else if (cmd == "RANGE") {
+    } else if (cmd == "INITIALIZE") {
+      container.initialize();
+      std::cout << "success" << std::endl;
+    } else if (cmd == "UPDATE_EDGES") {
       std::string seriesCode;
-      std::cin >> seriesCode;
-      Pair<double, double> p = container.range(seriesCode);
-      std::cout << p.getFirst() << ' ' << p.getSecond() << '\n';
-    } else if (cmd == "BUILD") {
-      std::string seriesCode;
-      std::cin >> seriesCode;
-      container.build(seriesCode);
-      std::cout << "success\n";
-    } else if (cmd == "FIND") {
-      int op;
-      double mean;
-      std::string operation;
-      std::cin >> mean >> operation;
-      op = operation == "less" ? -1 : operation == "equal" ? 0 : 1;
-      container.find(mean, op);
-    } else if (cmd == "DELETE") {
-      // Delete a Country
-      std::string countryName;
-      getchar();
-      std::getline(std::cin, countryName);
-      std::cout << (container.delete_country(countryName) ? "success"
-                                                          : "failure")
-                << '\n';
-    } else if (cmd == "LIMITS") {
-      std::string condition;
-      std::cin >> condition;
-      container.limits(condition == "lowest");
-    } else if (cmd == "LOOKUP") {
+      double threshold;
+      RELATION relation;
+      std::cin >> seriesCode >> threshold >> relation;
+      std::cout << (container.update_edges(seriesCode, threshold, relation)
+                        ? "success"
+                        : "failure")
+                << std::endl;
+    } else if (cmd == "ADJACENT") {
       std::string countryCode;
       std::cin >> countryCode;
-      Pair<int, unsigned int> in = container.lookup(countryCode);
-      if (!container.contains(countryCode))
-        std::cout << "failure\n";
-      else
-        std::cout << "index " << in.getFirst() << " searches " << in.getSecond()
-                  << '\n';
-    } else if (cmd == "REMOVE") {
-      std::string countryCode;
-      std::cin >> countryCode;
-      std::cout << (container.remove(countryCode) ? "success" : "failure")
-                << '\n';
-    } else if (cmd == "INSERT") {
-      std::string countryCode, filename;
-      std::cin >> countryCode >> filename;
-      std::cout << (container.insert(countryCode, filename) ? "success"
-                                                            : "failure")
-                << '\n';
+      container.adjacent(countryCode);
+    } else if (cmd == "PATH") {
+      std::string countryCode1, countryCode2;
+      std::cin >> countryCode1 >> countryCode2;
+      std::cout << (container.path(countryCode1, countryCode2) ? "true"
+                                                               : "false")
+                << std::endl;
+    } else if (cmd == "RELATIONSHIPS") {
+      std::string countryCode1, countryCode2;
+      std::cin >> countryCode1 >> countryCode2;
+      container.relationships(countryCode1, countryCode2);
     } else if (cmd == "EXIT") {
-      // Exit the program.
-      return 0;
+      break;
     }
   }
 

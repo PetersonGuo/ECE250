@@ -6,25 +6,15 @@
 */
 
 #include "../include/country.hpp"
-#include "../data_structures/include/file.hpp"
+#include "../include/file.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <cfloat>
 
-unsigned long long
-Country::CountryHash::operator()(const std::string& seriesCode) const {
-  unsigned long long W = 0, n = seriesCode.size();
-  for (unsigned int i = n; i > 0; --i)
-    W = W * 29 + seriesCode[n - i] - 'A';
-  return W;
-}
-
-Country::Country() : m_series(m_hash) {}
-
 Country::Country(const Country& other)
-    : m_name(other.m_name), m_code(other.m_code), m_series(m_hash) {
+    : m_name(other.m_name), m_code(other.m_code) {
   m_series = other.m_series;
 }
 
@@ -51,7 +41,7 @@ Country& Country::operator=(Country&& other) noexcept {
 }
 
 TimeSeries& Country::operator[](const std::string& key) {
-  if (!m_series.contains(key))
+  if (!m_series.count(key))
     return dummy_series();
   return m_series[key];
 }
@@ -60,7 +50,7 @@ TimeSeries Country::operator[](const std::string& key) const {
   return m_series.at(key);
 }
 
-void Country::close() {
+void Country::clear() {
   m_name = "";
   m_code = "";
   m_series.clear();
@@ -77,15 +67,15 @@ bool Country::load(std::ifstream& is) {
   std::stringstream ss;
 
   // Clear all TimeSeries and previous data before loading new data
-  close();
+  clear();
 
-  peek_line(is, line);
+  peekline(is, line);
   ss.str(line);
   std::getline(ss, m_name, ',');
   std::getline(ss, m_code, ',');
 
   while (true) {
-    peek_line(is, temp_name, ',');
+    peekline(is, temp_name, ',');
 
     if (temp_name == "")
       return 0;
@@ -100,23 +90,14 @@ bool Country::load(std::ifstream& is) {
     std::getline(ss, line, ',');
     std::getline(ss, line, ',');
 
-    auto pos = ss.tellg();
+    std::fpos<std::mbstate_t> pos = ss.tellg();
     std::getline(ss, line, ',');
     std::getline(ss, line, ',');
     ss.seekg(pos);
 
-    m_seriesCodes.push_back(line); // Store the series code in order
     m_series[line].load(ss);
   }
   return 1;
-}
-
-void Country::list() const {
-  // Iterate through the TimeSeries's and print names
-  std::cout << m_name << " " << m_code << " ";
-  for (auto& t : m_seriesCodes)
-    std::cout << m_series.at(t).get_series_name() << " ";
-  std::cout << std::endl;
 }
 
 std::string Country::get_country_name() const {
@@ -125,9 +106,4 @@ std::string Country::get_country_name() const {
 
 std::string Country::get_country_code() const {
   return m_code;
-}
-
-Map<std::string, TimeSeries, Country::CountryHash>::Iterator
-Country::end() const {
-  return m_series.end();
 }
